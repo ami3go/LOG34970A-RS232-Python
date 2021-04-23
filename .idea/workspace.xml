@@ -2,10 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d1d4e796-9773-4182-b7a5-812f3cd0b65c" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/DMM34411A.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/DMM34411A.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Docs/34410A_Quick_Reference.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Examples/DMM_class_test.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/DMM34411A_class.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/Logger_class_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/Logger_class_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/LOG34970A_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/LOG34970A_class.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,6 +15,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectId" id="1rZiDO6QYytdZIYMgX96VQFIsNF" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />

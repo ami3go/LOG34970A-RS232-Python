@@ -68,51 +68,58 @@ class LOG_34970A:
     # on_off = 0 - off
     # on_off = 1 - on
     # status -  check status
-    def conf_reading_time(self, on_off, check_back=1):
+    def conf_reading_time(self, on_off, check_val=1):
         cmd_list = ["OFF", "ON", "Unknown"]
         on_off = range_check(on_off,0,1,"ON/OFF state")
-        check_back = range_check(check_back,0,1,"check_back bool val")
+        check_val = range_check(check_val, 0, 1, "check_back bool val")
         txt = f'FORM:READ:TIME {cmd_list[on_off]}\r\n'
         self.ser.write(txt.encode())
-        if check_back == 1:
+        if check_val == 1:
             txt = f'FORM:READ:TIME?\r\n'
             self.ser.write(txt.encode())
             read_back = int(self.ser.readline().decode())
             print(f"FORM:READ:TIME {cmd_list[read_back]}")
             return read_back
 
-    def conf_system_date(self, yy=2021, mm=4, dd=23, check_back=1 ):
+    def conf_sys_date(self, yy=2021, mm=4, dd=23, check_val=1):
         yy = range_check(yy,2021,2200,"Year")
         mm = range_check(mm, 1, 12, "Month")
         dd = range_check(dd, 1, 31, "Day")
-        check_back = range_check(check_back, 0, 1, "check_back bool val")
+        check_val = range_check(check_val, 0, 1, "check_back bool val")
         txt = f'SYST:DATE {yy},{str(mm).zfill(2)},{dd}\r\n'
         self.ser.write(txt.encode())
 
-        if check_back == 1:
+        if check_val == 1:
             txt = f'SYST:DATE?\r\n'
             self.ser.write(txt.encode())
             read_back = self.ser.readline().decode()
             print(f"SYST:DATE? {read_back}")
             return read_back
 
-    def conf_system_time(self, hh=12, mm=20, ss=23, check_back=1 ):
+    def conf_sys_time(self, hh=12, mm=20, ss=23, check_val=1):
         hh = range_check(hh, 0, 23, "hours")
         mm = range_check(mm, 0, 59, "minutes")
         ss = range_check(ss, 0, 59, "seconds")
         ss = round(ss,3)
-        check_back = range_check(check_back, 0, 1, "check_back bool val")
+        check_val = range_check(check_val, 0, 1, "check_back bool val")
         txt = f'SYST:TIME {str(hh).zfill(2)},{str(mm).zfill(2)},{str(ss).zfill(6)}\r\n'
         self.ser.write(txt.encode())
 
-        if check_back == 1:
+        if check_val == 1:
             txt = f'SYST:TIME?\r\n'
             self.ser.write(txt.encode())
             read_back = self.ser.readline().decode()
             print(f"SYST:TIME? {read_back}")
             return read_back
 
-
+    def get_sys_time_scan(self, show_val=0):
+        show_val = range_check(show_val, 0, 1, "show bool val")
+        txt = f'SYST:TIME:SCAN?\r\n'
+        self.ser.write(txt.encode())
+        read_back = self.ser.readline().decode()
+        if show_val ==1:
+            print(f"{read_back}")
+        return read_back
 
 
 
