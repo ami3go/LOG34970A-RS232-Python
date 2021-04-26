@@ -13,6 +13,7 @@ def range_check(val, min, max, val_name):
     return val
 
 
+
 # ## Number of Points to request
 # USER_REQUESTED_POINTS = 1000
 #     ## None of these scopes offer more than 8,000,000 points
@@ -49,15 +50,25 @@ class LOG_34970A:
             )
             if not self.ser.isOpen():
                 self.ser.open()
-            txt = f'*IDN?\r\n'
-            self.ser.write(txt.encode())
-            read_back = self.ser.readline().decode()
+            txt = '*IDN?'
+            read_back = self.query(txt)
+            # self.ser.write(txt.encode())
+            # read_back = self.ser.readline().decode()
             print(f"Connected to: {read_back}")
 
             # tmp = self.ser.isOpen()
             # print("is open:", tmp)
             # return_value = self.get_status()
             return True
+
+    def send(self, cmd_srt):
+        txt = f'{cmd_srt}\r\n'
+        self.ser.write(txt.encode())
+
+    def query(self, cmd_srt):
+        txt = f'{cmd_srt}?'
+        self.send(txt)
+        return self.ser.readline().decode()
 
     def close(self):
         self.ser.close()
@@ -72,12 +83,11 @@ class LOG_34970A:
         cmd_list = ["OFF", "ON", "Unknown"]
         on_off = range_check(on_off,0,1,"ON/OFF state")
         check_val = range_check(check_val, 0, 1, "check_back bool val")
-        txt = f'FORM:READ:TIME {cmd_list[on_off]}\r\n'
-        self.ser.write(txt.encode())
+        txt = f'FORM:READ:TIME {cmd_list[on_off]}'
+        self.send(txt)
         if check_val == 1:
-            txt = f'FORM:READ:TIME?\r\n'
-            self.ser.write(txt.encode())
-            read_back = int(self.ser.readline().decode())
+            txt = 'FORM:READ:TIME?'
+            read_back = int(self.query(txt))
             print(f"FORM:READ:TIME {cmd_list[read_back]}")
             return read_back
 
@@ -121,5 +131,29 @@ class LOG_34970A:
             print(f"{read_back}")
         return read_back
 
+    def read(self):
+        txt = f'READ?\r\n'
+        print(f"CMD:{txt} need to be checked")
+        self.ser.write(txt.encode())
+        read_back = self.ser.readline().decode()
+        print(f"SYST:TIME? {read_back}")
+        return read_back
 
+    def read(self):
+        txt = f'READ?\r\n'
+        print(f"CMD:{txt} need to be checked")
+        self.ser.write(txt.encode())
+        read_back = self.ser.readline().decode()
+        print(f"SYST:TIME? {read_back}")
+        return read_back
 
+    def configure(self):
+        txt = f'READ?\r\n'
+        print(f"CMD:{txt} need to be checked")
+        self.ser.write(txt.encode())
+        read_back = self.ser.readline().decode()
+        print(f"SYST:TIME? {read_back}")
+        return read_back
+
+if __name__ == "__main__":
+    pass
