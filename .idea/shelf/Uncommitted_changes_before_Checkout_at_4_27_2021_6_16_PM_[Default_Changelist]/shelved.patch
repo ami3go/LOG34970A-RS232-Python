@@ -1,0 +1,432 @@
+Index: src/LOG34970A_v2_class.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>#import pyvisa # PyVisa info @ http://PyVisa.readthedocs.io/en/stable/\r\nimport serial.tools.list_ports\r\nimport serial\r\nimport time\r\n\r\ndef range_check(val, min, max, val_name):\r\n    if val > max:\r\n        print(f\"Wrong {val_name}: {val}. Max output should be less then {max} V\")\r\n        val = max\r\n    if val < min:\r\n        print(f\"Wrong {val_name}: {val}. Should be >= {min}\")\r\n        val = min\r\n    return val\r\n\r\n\r\n\r\n# ## Number of Points to request\r\n# USER_REQUESTED_POINTS = 1000\r\n#     ## None of these scopes offer more than 8,000,000 points\r\n#     ## Setting this to 8000000 or more will ensure that the maximum number of available points is retrieved, though often less will come back.\r\n#     ## Average and High Resolution acquisition types have shallow memory depth, and thus acquiring waveforms in Normal acq. type and post processing for High Res. or repeated acqs. for Average is suggested if more points are desired.\r\n#     ## Asking for zero (0) points, a negative number of points, fewer than 100 points, or a non-integer number of points (100.1 -> error, but 100. or 100.0 is ok) will result in an error, specifically -222,\"Data out of range\"\r\n#\r\n# ## Initialization constants\r\n# INSTRUMENT_VISA_ADDRESS = 'USB0::0x0957::0x0A07::MY48001027::0::INSTR' # Get this from Keysight IO Libraries Connection Expert\r\n#     ## Note: sockets are not supported in this revision of the script (though it is possible), and PyVisa 1.8 does not support HiSlip, nor do these scopes.\r\n#     ## Note: USB transfers are generally fastest.\r\n#     ## Video: Connecting to Instruments Over LAN, USB, and GPIB in Keysight Connection Expert: https://youtu.be/sZz8bNHX5u4\r\n\r\nGLOBAL_TOUT =  10 # IO time out in milliseconds\r\n\r\nclass LOG_34970A:\r\n\r\n    def __init__(self):\r\n        self.ser = None\r\n\r\n    def init(self, com_port, baudrate_var=115200):\r\n        com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]\r\n        if com_port not in com_port_list:\r\n            print(\"COM port is not found\")\r\n            print(\"Please ensure that USB is connected\")\r\n            print(f\"Please check COM port Number. Currently it is {com_port} \")\r\n            print(f'Founded COM ports:{com_port_list}')\r\n            return False\r\n        else:\r\n            self.ser = serial.Serial(\r\n                port=com_port,\r\n                baudrate=baudrate_var,\r\n                timeout=0.1\r\n            )\r\n            if not self.ser.isOpen():\r\n                self.ser.open()\r\n            txt = '*IDN'\r\n            read_back = self.query(txt)\r\n            print(f\"Connected to: {read_back}\")\r\n\r\n            # tmp = self.ser.isOpen()\r\n            # print(\"is open:\", tmp)\r\n            # return_value = self.get_status()\r\n            return True\r\n\r\n    def send(self, cmd_srt):\r\n        txt = f'{cmd_srt}\\r\\n'\r\n        self.ser.write(txt.encode())\r\n\r\n    def query(self, cmd_srt):\r\n        txt = f'{cmd_srt}?'\r\n        self.send(txt)\r\n        return self.ser.readline().decode()\r\n\r\n    def close(self):\r\n        self.ser.close()\r\n        self.ser = None\r\n\r\n\r\n    # configuring reading time\r\n    # on_off = 0 - off\r\n    # on_off = 1 - on\r\n    # status -  check status\r\n    def conf_reading_time(self, on_off, check_val=1):\r\n        cmd_list = [\"OFF\", \"ON\", \"Unknown\"]\r\n        on_off = range_check(on_off,0,1,\"ON/OFF state\")\r\n        check_val = range_check(check_val, 0, 1, \"check_back bool val\")\r\n        txt = f'FORM:READ:TIME {cmd_list[on_off]}'\r\n        self.send(txt)\r\n        if check_val == 1:\r\n            txt = 'FORM:READ:TIME?'\r\n            read_back = int(self.query(txt))\r\n            print(f\"FORM:READ:TIME {cmd_list[read_back]}\")\r\n            return read_back\r\n\r\n    def conf_sys_date(self, yy=2021, mm=4, dd=23, check_val=1):\r\n        yy = range_check(yy,2021,2200,\"Year\")\r\n        mm = range_check(mm, 1, 12, \"Month\")\r\n        dd = range_check(dd, 1, 31, \"Day\")\r\n        check_val = range_check(check_val, 0, 1, \"check_back bool val\")\r\n        txt = f'SYST:DATE {yy},{str(mm).zfill(2)},{dd}\\r\\n'\r\n        self.ser.write(txt.encode())\r\n\r\n        if check_val == 1:\r\n            txt = f'SYST:DATE?\\r\\n'\r\n            self.ser.write(txt.encode())\r\n            read_back = self.ser.readline().decode()\r\n            print(f\"SYST:DATE? {read_back}\")\r\n            return read_back\r\n\r\n    def conf_sys_time(self, hh=12, mm=20, ss=23, check_val=1):\r\n        hh = range_check(hh, 0, 23, \"hours\")\r\n        mm = range_check(mm, 0, 59, \"minutes\")\r\n        ss = range_check(ss, 0, 59, \"seconds\")\r\n        ss = round(ss,3)\r\n        check_val = range_check(check_val, 0, 1, \"check_back bool val\")\r\n        txt = f'SYST:TIME {str(hh).zfill(2)},{str(mm).zfill(2)},{str(ss).zfill(6)}\\r\\n'\r\n        self.ser.write(txt.encode())\r\n\r\n        if check_val == 1:\r\n            txt = f'SYST:TIME?\\r\\n'\r\n            self.ser.write(txt.encode())\r\n            read_back = self.ser.readline().decode()\r\n            print(f\"SYST:TIME? {read_back}\")\r\n            return read_back\r\n\r\n    def get_sys_time_scan(self, show_val=0):\r\n        show_val = range_check(show_val, 0, 1, \"show bool val\")\r\n        txt = f'SYST:TIME:SCAN?\\r\\n'\r\n        self.ser.write(txt.encode())\r\n        read_back = self.ser.readline().decode()\r\n        if show_val ==1:\r\n            print(f\"{read_back}\")\r\n        return read_back\r\n\r\n    def read(self):\r\n        txt = f'READ?\\r\\n'\r\n        print(f\"CMD:{txt} need to be checked\")\r\n        self.ser.write(txt.encode())\r\n        read_back = self.ser.readline().decode()\r\n        print(f\"SYST:TIME? {read_back}\")\r\n        return read_back\r\n\r\n    def read(self):\r\n        txt = f'READ?\\r\\n'\r\n        print(f\"CMD:{txt} need to be checked\")\r\n        self.ser.write(txt.encode())\r\n        read_back = self.ser.readline().decode()\r\n        print(f\"SYST:TIME? {read_back}\")\r\n        return read_back\r\n\r\n    def configure(self):\r\n        txt = f'READ?\\r\\n'\r\n        print(f\"CMD:{txt} need to be checked\")\r\n        self.ser.write(txt.encode())\r\n        read_back = self.ser.readline().decode()\r\n        print(f\"SYST:TIME? {read_back}\")\r\n        return read_back\r\n\r\n\r\nclass communicator():\r\n    def __init__(self):\r\n        # Commands Subsystem\r\n        # this is the list of Subsystem commands\r\n        # super(communicator, self).__init__(port=\"COM10\",baudrate=115200, timeout=0.1)\r\n        print(\"communicator init\")\r\n        self.cmd = None\r\n        self.ser = None\r\n\r\n\r\n\r\n    def init(self, com_port, baudrate_var=115200):\r\n        com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]\r\n        if com_port not in com_port_list:\r\n            print(\"COM port is not found\")\r\n            print(\"Please ensure that USB is connected\")\r\n            print(f\"Please check COM port Number. Currently it is {com_port} \")\r\n            print(f'Founded COM ports:{com_port_list}')\r\n            return False\r\n        else:\r\n            self.ser = serial.Serial(\r\n                port=com_port,\r\n                baudrate=baudrate_var,\r\n                timeout=0.1\r\n            )\r\n            if not self.ser.isOpen():\r\n                self.ser.open()\r\n            txt = '*IDN'\r\n            read_back = self.query(txt)\r\n            print(f\"Connected to: {read_back}\")\r\n\r\n            # tmp = self.ser.isOpen()\r\n            # print(\"is open:\", tmp)\r\n            # return_value = self.get_status()\r\n            return True\r\n\r\n    def send(self, param):\r\n        # will put sending command here\r\n        txt = f'{self.cmd} {param}\\n\\r'\r\n        txt_debug = f'Sending: {txt}'\r\n        print(txt_debug)\r\n        self.ser.write(txt_debug.encode())\r\n        return txt_debug\r\n\r\n    def query(self, cmd):\r\n        # will put quire here\r\n        return (\"Query:  \" + cmd + \"?\")\r\n\r\n\r\n    # def send(self, cmd_srt):\r\n    #     txt = f'{cmd_srt}\\r\\n'\r\n    #     self.ser.write(txt.encode())\r\n    #\r\n    # def query(self, cmd_srt):\r\n    #     txt = f'{cmd_srt}?'\r\n    #     self.send(txt)\r\n    #     return self.ser.readline().decode()\r\n\r\n    def close(self):\r\n        self.ser.close()\r\n        self.ser = None\r\n\r\n\r\nclass results_processor:\r\n    def parse_output(self, output):\r\n        print('RESULT')\r\n\r\n\r\nclass storage(communicator):\r\n    def __init__(self):\r\n        # super(communicator, self).__init__()\r\n        # super(storage,self).__init__()\r\n        # communicator.init(self, \"COM10\")\r\n        # this is the list of Subsystem commands\r\n        # self.calculate = calculate()\r\n        # self.calibration = calibration()\r\n        self.configure = configure()\r\n        # self.data = data()\r\n        # self.diagnostic = diagnostic()\r\n        # self.display = display()\r\n        # self.fformat = fformat()\r\n        # self.ieee-488.2 = ieee-488.2()\r\n        # self.instrument = instrument()\r\n        self.measure = measure()\r\n        # self.memory = memory()\r\n        # self.mmemory = mmemory()\r\n        # self.output = output()\r\n        # self.route = route()\r\n        # self.sense = sense()\r\n        # self.source = source()\r\n        # self.status = status()\r\n        # self.system = system()\r\n        # self.trigger = trigger()\r\n\r\n\r\nclass configure(communicator):\r\n    # availanle commands for CONFigure\r\n    # CONFigure?\r\n    # CONFigure:CURRent:AC\r\n    # CONFigure:CURRent:DC\r\n    # CONFigure:DIGital:BYTE\r\n    # CONFigure:FREQuency\r\n    # CONFigure:FRESistance\r\n    # CONFigure:PERiod\r\n    # CONFigure:RESistance\r\n    # CONFigure:TEMPerature\r\n    # CONFigure:TOTalize\r\n    # CONFigure:VOLTage:AC\r\n    # CONFigure:VOLTage:DC\r\n    def __init__(self):\r\n        print(\"INIT CONFIGURE\")\r\n        super(configure, self).__init__()\r\n        self.prefix = \"CONFigure\"\r\n        self.cmd = \"CONFigure\"\r\n        self.voltage = voltage(self.prefix)\r\n        self.current = current(self.prefix)\r\n\r\n    def get(self):\r\n        txt = self.prefix\r\n        # print(txt)\r\n        return txt\r\n\r\n\r\nclass measure:\r\n    # command list :\r\n    # MEASure:CURRent:AC?\r\n    # MEASure:CURRent:DC?\r\n    # MEASure:DIGital:BYTE?\r\n    # MEASure:FREQuency?\r\n    # MEASure:FRESistance?\r\n    # MEASure:PERiod?\r\n    # MEASure:RESistance?\r\n    # MEASure:TEMPerature?\r\n    # MEASure:TOTalize?\r\n    # MEASure:VOLTage:AC?\r\n    # MEASure:VOLTage:DC?\r\n\r\n    def __init__(self):\r\n        self.f_prefix = \"MEASure\"\r\n        self.voltage = voltage(self.f_prefix)\r\n        self.current = current(self.f_prefix)\r\n\r\n\r\nclass voltage(communicator):\r\n    def __init__(self, prefix):\r\n        self.prefix = prefix + \":\" + \"VOLTage\"\r\n        self.ac = ac(self.prefix)\r\n        self.dc = dc(self.prefix)\r\n\r\n\r\nclass current(communicator):\r\n    def __init__(self, prefix):\r\n        self.prefix = prefix + \":\" + \"Current\"\r\n        self.ac = ac(self.prefix)\r\n        self.dc = dc(self.prefix)\r\n\r\n    # def v_print(self):\r\n    #     txt = self.prefix\r\n    #     print(txt)\r\n\r\nclass ac(communicator):\r\n    def __init__(self, prefix):\r\n        self.prefix = prefix\r\n        self.cmd = self.prefix + \":\" + \"AC\"\r\n\r\nclass dc:\r\n    def __init__(self, prefix):\r\n        self.prefix = prefix\r\n\r\n    def get(self):\r\n        txt = self.prefix + \":\" + \"DC\"\r\n        # print(txt)\r\n        return txt\r\n\r\n\r\nif __name__ == '__main__':\r\n    # dev = LOG_34970A()\r\n    # dev.init(\"COM10\")\r\n    # dev.send(\"COM10 send\")\r\n    cmd = storage()\r\n    # cmd.init(\"COM10\")\r\n\r\n    # cmd.send(152200)\r\n    # cmd.write(\"write inheritant\".encode())\r\n    # cmd.configure.send(1555)\r\n    cmd.configure.voltage.ac.send(5555)\r\n\r\n    cmd.close()\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/LOG34970A_v2_class.py b/src/LOG34970A_v2_class.py
+--- a/src/LOG34970A_v2_class.py	(revision 6622a3ee54025d617e7110295cf786d9d9341141)
++++ b/src/LOG34970A_v2_class.py	(date 1619536545068)
+@@ -14,154 +14,154 @@
+ 
+ 
+ 
+-# ## Number of Points to request
+-# USER_REQUESTED_POINTS = 1000
+-#     ## None of these scopes offer more than 8,000,000 points
+-#     ## Setting this to 8000000 or more will ensure that the maximum number of available points is retrieved, though often less will come back.
+-#     ## Average and High Resolution acquisition types have shallow memory depth, and thus acquiring waveforms in Normal acq. type and post processing for High Res. or repeated acqs. for Average is suggested if more points are desired.
+-#     ## Asking for zero (0) points, a negative number of points, fewer than 100 points, or a non-integer number of points (100.1 -> error, but 100. or 100.0 is ok) will result in an error, specifically -222,"Data out of range"
++# # ## Number of Points to request
++# # USER_REQUESTED_POINTS = 1000
++# #     ## None of these scopes offer more than 8,000,000 points
++# #     ## Setting this to 8000000 or more will ensure that the maximum number of available points is retrieved, though often less will come back.
++# #     ## Average and High Resolution acquisition types have shallow memory depth, and thus acquiring waveforms in Normal acq. type and post processing for High Res. or repeated acqs. for Average is suggested if more points are desired.
++# #     ## Asking for zero (0) points, a negative number of points, fewer than 100 points, or a non-integer number of points (100.1 -> error, but 100. or 100.0 is ok) will result in an error, specifically -222,"Data out of range"
++# #
++# # ## Initialization constants
++# # INSTRUMENT_VISA_ADDRESS = 'USB0::0x0957::0x0A07::MY48001027::0::INSTR' # Get this from Keysight IO Libraries Connection Expert
++# #     ## Note: sockets are not supported in this revision of the script (though it is possible), and PyVisa 1.8 does not support HiSlip, nor do these scopes.
++# #     ## Note: USB transfers are generally fastest.
++# #     ## Video: Connecting to Instruments Over LAN, USB, and GPIB in Keysight Connection Expert: https://youtu.be/sZz8bNHX5u4
++#
++# GLOBAL_TOUT =  10 # IO time out in milliseconds
+ #
+-# ## Initialization constants
+-# INSTRUMENT_VISA_ADDRESS = 'USB0::0x0957::0x0A07::MY48001027::0::INSTR' # Get this from Keysight IO Libraries Connection Expert
+-#     ## Note: sockets are not supported in this revision of the script (though it is possible), and PyVisa 1.8 does not support HiSlip, nor do these scopes.
+-#     ## Note: USB transfers are generally fastest.
+-#     ## Video: Connecting to Instruments Over LAN, USB, and GPIB in Keysight Connection Expert: https://youtu.be/sZz8bNHX5u4
+-
+-GLOBAL_TOUT =  10 # IO time out in milliseconds
++# class LOG_34970A:
++#
++#     def __init__(self):
++#         self.ser = None
++#
++#     def init(self, com_port, baudrate_var=115200):
++#         com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]
++#         if com_port not in com_port_list:
++#             print("COM port is not found")
++#             print("Please ensure that USB is connected")
++#             print(f"Please check COM port Number. Currently it is {com_port} ")
++#             print(f'Founded COM ports:{com_port_list}')
++#             return False
++#         else:
++#             self.ser = serial.Serial(
++#                 port=com_port,
++#                 baudrate=baudrate_var,
++#                 timeout=0.1
++#             )
++#             if not self.ser.isOpen():
++#                 self.ser.open()
++#             txt = '*IDN'
++#             read_back = self.query(txt)
++#             print(f"Connected to: {read_back}")
++#
++#             # tmp = self.ser.isOpen()
++#             # print("is open:", tmp)
++#             # return_value = self.get_status()
++#             return True
++#
++#     def send(self, cmd_srt):
++#         txt = f'{cmd_srt}\r\n'
++#         self.ser.write(txt.encode())
++#
++#     def query(self, cmd_srt):
++#         txt = f'{cmd_srt}?'
++#         self.send(txt)
++#         return self.ser.readline().decode()
++#
++#     def close(self):
++#         self.ser.close()
++#         self.ser = None
++#
++#
++#     # configuring reading time
++#     # on_off = 0 - off
++#     # on_off = 1 - on
++#     # status -  check status
++#     def conf_reading_time(self, on_off, check_val=1):
++#         cmd_list = ["OFF", "ON", "Unknown"]
++#         on_off = range_check(on_off,0,1,"ON/OFF state")
++#         check_val = range_check(check_val, 0, 1, "check_back bool val")
++#         txt = f'FORM:READ:TIME {cmd_list[on_off]}'
++#         self.send(txt)
++#         if check_val == 1:
++#             txt = 'FORM:READ:TIME?'
++#             read_back = int(self.query(txt))
++#             print(f"FORM:READ:TIME {cmd_list[read_back]}")
++#             return read_back
++#
++#     def conf_sys_date(self, yy=2021, mm=4, dd=23, check_val=1):
++#         yy = range_check(yy,2021,2200,"Year")
++#         mm = range_check(mm, 1, 12, "Month")
++#         dd = range_check(dd, 1, 31, "Day")
++#         check_val = range_check(check_val, 0, 1, "check_back bool val")
++#         txt = f'SYST:DATE {yy},{str(mm).zfill(2)},{dd}\r\n'
++#         self.ser.write(txt.encode())
++#
++#         if check_val == 1:
++#             txt = f'SYST:DATE?\r\n'
++#             self.ser.write(txt.encode())
++#             read_back = self.ser.readline().decode()
++#             print(f"SYST:DATE? {read_back}")
++#             return read_back
++#
++#     def conf_sys_time(self, hh=12, mm=20, ss=23, check_val=1):
++#         hh = range_check(hh, 0, 23, "hours")
++#         mm = range_check(mm, 0, 59, "minutes")
++#         ss = range_check(ss, 0, 59, "seconds")
++#         ss = round(ss,3)
++#         check_val = range_check(check_val, 0, 1, "check_back bool val")
++#         txt = f'SYST:TIME {str(hh).zfill(2)},{str(mm).zfill(2)},{str(ss).zfill(6)}\r\n'
++#         self.ser.write(txt.encode())
++#
++#         if check_val == 1:
++#             txt = f'SYST:TIME?\r\n'
++#             self.ser.write(txt.encode())
++#             read_back = self.ser.readline().decode()
++#             print(f"SYST:TIME? {read_back}")
++#             return read_back
++#
++#     def get_sys_time_scan(self, show_val=0):
++#         show_val = range_check(show_val, 0, 1, "show bool val")
++#         txt = f'SYST:TIME:SCAN?\r\n'
++#         self.ser.write(txt.encode())
++#         read_back = self.ser.readline().decode()
++#         if show_val ==1:
++#             print(f"{read_back}")
++#         return read_back
++#
++#     def read(self):
++#         txt = f'READ?\r\n'
++#         print(f"CMD:{txt} need to be checked")
++#         self.ser.write(txt.encode())
++#         read_back = self.ser.readline().decode()
++#         print(f"SYST:TIME? {read_back}")
++#         return read_back
++#
++#     def read(self):
++#         txt = f'READ?\r\n'
++#         print(f"CMD:{txt} need to be checked")
++#         self.ser.write(txt.encode())
++#         read_back = self.ser.readline().decode()
++#         print(f"SYST:TIME? {read_back}")
++#         return read_back
++#
++#     def configure(self):
++#         txt = f'READ?\r\n'
++#         print(f"CMD:{txt} need to be checked")
++#         self.ser.write(txt.encode())
++#         read_back = self.ser.readline().decode()
++#         print(f"SYST:TIME? {read_back}")
++#         return read_back
+ 
+-class LOG_34970A:
+ 
+-    def __init__(self):
+-        self.ser = None
+-
+-    def init(self, com_port, baudrate_var=115200):
+-        com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]
+-        if com_port not in com_port_list:
+-            print("COM port is not found")
+-            print("Please ensure that USB is connected")
+-            print(f"Please check COM port Number. Currently it is {com_port} ")
+-            print(f'Founded COM ports:{com_port_list}')
+-            return False
+-        else:
+-            self.ser = serial.Serial(
+-                port=com_port,
+-                baudrate=baudrate_var,
+-                timeout=0.1
+-            )
+-            if not self.ser.isOpen():
+-                self.ser.open()
+-            txt = '*IDN'
+-            read_back = self.query(txt)
+-            print(f"Connected to: {read_back}")
+-
+-            # tmp = self.ser.isOpen()
+-            # print("is open:", tmp)
+-            # return_value = self.get_status()
+-            return True
+-
+-    def send(self, cmd_srt):
+-        txt = f'{cmd_srt}\r\n'
+-        self.ser.write(txt.encode())
+-
+-    def query(self, cmd_srt):
+-        txt = f'{cmd_srt}?'
+-        self.send(txt)
+-        return self.ser.readline().decode()
+-
+-    def close(self):
+-        self.ser.close()
+-        self.ser = None
+-
+-
+-    # configuring reading time
+-    # on_off = 0 - off
+-    # on_off = 1 - on
+-    # status -  check status
+-    def conf_reading_time(self, on_off, check_val=1):
+-        cmd_list = ["OFF", "ON", "Unknown"]
+-        on_off = range_check(on_off,0,1,"ON/OFF state")
+-        check_val = range_check(check_val, 0, 1, "check_back bool val")
+-        txt = f'FORM:READ:TIME {cmd_list[on_off]}'
+-        self.send(txt)
+-        if check_val == 1:
+-            txt = 'FORM:READ:TIME?'
+-            read_back = int(self.query(txt))
+-            print(f"FORM:READ:TIME {cmd_list[read_back]}")
+-            return read_back
+-
+-    def conf_sys_date(self, yy=2021, mm=4, dd=23, check_val=1):
+-        yy = range_check(yy,2021,2200,"Year")
+-        mm = range_check(mm, 1, 12, "Month")
+-        dd = range_check(dd, 1, 31, "Day")
+-        check_val = range_check(check_val, 0, 1, "check_back bool val")
+-        txt = f'SYST:DATE {yy},{str(mm).zfill(2)},{dd}\r\n'
+-        self.ser.write(txt.encode())
+-
+-        if check_val == 1:
+-            txt = f'SYST:DATE?\r\n'
+-            self.ser.write(txt.encode())
+-            read_back = self.ser.readline().decode()
+-            print(f"SYST:DATE? {read_back}")
+-            return read_back
+-
+-    def conf_sys_time(self, hh=12, mm=20, ss=23, check_val=1):
+-        hh = range_check(hh, 0, 23, "hours")
+-        mm = range_check(mm, 0, 59, "minutes")
+-        ss = range_check(ss, 0, 59, "seconds")
+-        ss = round(ss,3)
+-        check_val = range_check(check_val, 0, 1, "check_back bool val")
+-        txt = f'SYST:TIME {str(hh).zfill(2)},{str(mm).zfill(2)},{str(ss).zfill(6)}\r\n'
+-        self.ser.write(txt.encode())
+-
+-        if check_val == 1:
+-            txt = f'SYST:TIME?\r\n'
+-            self.ser.write(txt.encode())
+-            read_back = self.ser.readline().decode()
+-            print(f"SYST:TIME? {read_back}")
+-            return read_back
+-
+-    def get_sys_time_scan(self, show_val=0):
+-        show_val = range_check(show_val, 0, 1, "show bool val")
+-        txt = f'SYST:TIME:SCAN?\r\n'
+-        self.ser.write(txt.encode())
+-        read_back = self.ser.readline().decode()
+-        if show_val ==1:
+-            print(f"{read_back}")
+-        return read_back
+-
+-    def read(self):
+-        txt = f'READ?\r\n'
+-        print(f"CMD:{txt} need to be checked")
+-        self.ser.write(txt.encode())
+-        read_back = self.ser.readline().decode()
+-        print(f"SYST:TIME? {read_back}")
+-        return read_back
+-
+-    def read(self):
+-        txt = f'READ?\r\n'
+-        print(f"CMD:{txt} need to be checked")
+-        self.ser.write(txt.encode())
+-        read_back = self.ser.readline().decode()
+-        print(f"SYST:TIME? {read_back}")
+-        return read_back
+-
+-    def configure(self):
+-        txt = f'READ?\r\n'
+-        print(f"CMD:{txt} need to be checked")
+-        self.ser.write(txt.encode())
+-        read_back = self.ser.readline().decode()
+-        print(f"SYST:TIME? {read_back}")
+-        return read_back
+-
+-
+-class communicator():
++class communicator:
+     def __init__(self):
+         # Commands Subsystem
+         # this is the list of Subsystem commands
+         # super(communicator, self).__init__(port="COM10",baudrate=115200, timeout=0.1)
+         print("communicator init")
+         self.cmd = None
+-        self.ser = None
++        # self.ser = serial.Serial()
+ 
+ 
+ 
+@@ -174,11 +174,14 @@
+             print(f'Founded COM ports:{com_port_list}')
+             return False
+         else:
+-            self.ser = serial.Serial(
+-                port=com_port,
+-                baudrate=baudrate_var,
+-                timeout=0.1
+-            )
++            # self.ser = serial.Serial(
++            #     port=com_port,
++            #     baudrate=baudrate_var,
++            #     timeout=0.1
++            # )
++            self.ser.port = com_port
++            self.ser.baudrate = baudrate_var
++            self.ser.timeout = 1
+             if not self.ser.isOpen():
+                 self.ser.open()
+             txt = '*IDN'
+@@ -339,6 +342,7 @@
+     # cmd.send(152200)
+     # cmd.write("write inheritant".encode())
+     # cmd.configure.send(1555)
++    cmd.configure.send(200)
+     cmd.configure.voltage.ac.send(5555)
+ 
+     cmd.close()
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"d1d4e796-9773-4182-b7a5-812f3cd0b65c\" name=\"Default Changelist\" comment=\"\">\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/Examples/Logger_class_test.py\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/Examples/Logger_class_test.py\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/src/LOG34970A_class.py\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/src/LOG34970A_class.py\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"ProjectId\" id=\"1rZiDO6QYytdZIYMgX96VQFIsNF\" />\r\n  <component name=\"ProjectLevelVcsManager\" settingsEditedManually=\"true\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\">\r\n    <property name=\"RunOnceActivity.OpenProjectViewOnStart\" value=\"true\" />\r\n    <property name=\"RunOnceActivity.ShowReadmeOnStart\" value=\"true\" />\r\n    <property name=\"last_opened_file_path\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"RunManager\">\r\n    <configuration name=\"Logger_class_test\" type=\"PythonConfigurationType\" factoryName=\"Python\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"DMM34411A\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$/Examples\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"true\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/Examples/Logger_class_test.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <recent_temporary>\r\n      <list>\r\n        <item itemvalue=\"Python.Logger_class_test\" />\r\n      </list>\r\n    </recent_temporary>\r\n  </component>\r\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"d1d4e796-9773-4182-b7a5-812f3cd0b65c\" name=\"Default Changelist\" comment=\"\" />\r\n      <created>1619189892365</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1619189892365</updated>\r\n    </task>\r\n    <servers />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 6622a3ee54025d617e7110295cf786d9d9341141)
++++ b/.idea/workspace.xml	(date 1619536334585)
+@@ -2,9 +2,7 @@
+ <project version="4">
+   <component name="ChangeListManager">
+     <list default="true" id="d1d4e796-9773-4182-b7a5-812f3cd0b65c" name="Default Changelist" comment="">
+-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/Examples/Logger_class_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/Logger_class_test.py" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/src/LOG34970A_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/LOG34970A_class.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+@@ -12,6 +10,11 @@
+     <option name="LAST_RESOLUTION" value="IGNORE" />
+   </component>
+   <component name="Git.Settings">
++    <option name="RECENT_BRANCH_BY_REPOSITORY">
++      <map>
++        <entry key="$PROJECT_DIR$" value="tesing_class2obj" />
++      </map>
++    </option>
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+   </component>
+   <component name="ProjectId" id="1rZiDO6QYytdZIYMgX96VQFIsNF" />
+@@ -25,7 +28,28 @@
+     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+   </component>
+-  <component name="RunManager">
++  <component name="RunManager" selected="Python.LOG34970A_v2_class">
++    <configuration name="LOG34970A_v2_class" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
++      <module name="DMM34411A" />
++      <option name="INTERPRETER_OPTIONS" value="" />
++      <option name="PARENT_ENVS" value="true" />
++      <envs>
++        <env name="PYTHONUNBUFFERED" value="1" />
++      </envs>
++      <option name="SDK_HOME" value="" />
++      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
++      <option name="IS_MODULE_SDK" value="true" />
++      <option name="ADD_CONTENT_ROOTS" value="true" />
++      <option name="ADD_SOURCE_ROOTS" value="true" />
++      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/LOG34970A_v2_class.py" />
++      <option name="PARAMETERS" value="" />
++      <option name="SHOW_COMMAND_LINE" value="false" />
++      <option name="EMULATE_TERMINAL" value="false" />
++      <option name="MODULE_MODE" value="false" />
++      <option name="REDIRECT_INPUT" value="false" />
++      <option name="INPUT_FILE" value="" />
++      <method v="2" />
++    </configuration>
+     <configuration name="Logger_class_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+       <module name="DMM34411A" />
+       <option name="INTERPRETER_OPTIONS" value="" />
+@@ -49,6 +73,8 @@
+     </configuration>
+     <recent_temporary>
+       <list>
++        <item itemvalue="Python.LOG34970A_v2_class" />
++        <item itemvalue="Python.Logger_class_test" />
+         <item itemvalue="Python.Logger_class_test" />
+       </list>
+     </recent_temporary>
+@@ -64,4 +90,26 @@
+     </task>
+     <servers />
+   </component>
++  <component name="Vcs.Log.History.Properties">
++    <option name="COLUMN_ID_ORDER">
++      <list>
++        <option value="Default.Root" />
++        <option value="Default.Author" />
++        <option value="Default.Date" />
++        <option value="Default.Subject" />
++      </list>
++    </option>
++  </component>
++  <component name="Vcs.Log.Tabs.Properties">
++    <option name="TAB_STATES">
++      <map>
++        <entry key="MAIN">
++          <value>
++            <State />
++          </value>
++        </entry>
++      </map>
++    </option>
++    <option name="oldMeFiltersMigrated" value="true" />
++  </component>
+ </project>
+\ No newline at end of file
