@@ -190,17 +190,30 @@ class communicator():
             # return_value = self.get_status()
             return True
 
-    def send(self, param):
+    def send(self, txt, param):
         # will put sending command here
-        txt = f'{self.cmd} {param}\n\r'
+        txt = f'{txt} {param}\n\r'
         txt_debug = f'Sending: {txt}'
         print(txt_debug)
-        self.ser.write(txt_debug.encode())
+        self.ser.write(txt.encode())
         return txt_debug
 
     def query(self, cmd):
         # will put quire here
         return ("Query:  " + cmd + "?")
+
+    def close(self):
+        self.ser.close()
+        self.ser = None
+
+
+class str_ret:
+    def __init__(self):
+        self.cmd = None
+
+    def send(self):
+        # will put sending command here
+        return self.cmd
 
 
     # def send(self, cmd_srt):
@@ -222,7 +235,7 @@ class results_processor:
         print('RESULT')
 
 
-class storage(communicator):
+class storage():
     def __init__(self):
         # super(communicator, self).__init__()
         # super(storage,self).__init__()
@@ -249,7 +262,7 @@ class storage(communicator):
         # self.trigger = trigger()
 
 
-class configure(communicator):
+class configure():
     # availanle commands for CONFigure
     # CONFigure?
     # CONFigure:CURRent:AC
@@ -297,14 +310,14 @@ class measure:
         self.current = current(self.f_prefix)
 
 
-class voltage(communicator):
+class voltage():
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "VOLTage"
         self.ac = ac(self.prefix)
         self.dc = dc(self.prefix)
 
 
-class current(communicator):
+class current():
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "Current"
         self.ac = ac(self.prefix)
@@ -314,19 +327,21 @@ class current(communicator):
     #     txt = self.prefix
     #     print(txt)
 
-class ac(communicator):
+class ac(str_ret):
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "AC"
 
-class dc:
+    def get(self):
+        return self.cmd
+
+class dc(str_ret):
     def __init__(self, prefix):
         self.prefix = prefix
+        self.cmd = self.prefix + ":" + "DC"
 
     def get(self):
-        txt = self.prefix + ":" + "DC"
-        # print(txt)
-        return txt
+        return self.cmd
 
 
 if __name__ == '__main__':
@@ -334,11 +349,14 @@ if __name__ == '__main__':
     # dev.init("COM10")
     # dev.send("COM10 send")
     cmd = storage()
+    dev = communicator()
+    dev.init("COM10")
     # cmd.init("COM10")
-
     # cmd.send(152200)
     # cmd.write("write inheritant".encode())
     # cmd.configure.send(1555)
-    cmd.configure.voltage.ac.send(5555)
-
-    cmd.close()
+    # cmd.configure.voltage.ac.send(5555)
+    # cmd.configure.voltage.ac.send()
+    dev.send(cmd.configure.voltage.ac.send(), 100)
+    dev.send(cmd.measure.voltage.ac.send(), 10)
+    dev.close()
