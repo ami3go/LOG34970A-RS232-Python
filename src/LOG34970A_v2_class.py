@@ -343,8 +343,8 @@ if __name__ == '__main__':
     # dev.init("COM10")
     # dev.send("COM10 send")
     cmd = storage()
-    cmd.int_init()
-
+    # cmd.int_init()
+    #
     # cmd.init("COM10")
 
     # cmd.send(152200)
