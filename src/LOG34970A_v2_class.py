@@ -29,173 +29,179 @@ def range_check(val, min, max, val_name):
 
 GLOBAL_TOUT =  10 # IO time out in milliseconds
 
-class LOG_34970A:
+# class LOG_34970A:
+#
+#     def __init__(self):
+#         self.ser = None
+#
+#     def init(self, com_port, baudrate_var=115200):
+#         com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]
+#         if com_port not in com_port_list:
+#             print("COM port is not found")
+#             print("Please ensure that USB is connected")
+#             print(f"Please check COM port Number. Currently it is {com_port} ")
+#             print(f'Founded COM ports:{com_port_list}')
+#             return False
+#         else:
+#             self.ser = serial.Serial(
+#                 port=com_port,
+#                 baudrate=baudrate_var,
+#                 timeout=0.1
+#             )
+#             if not self.ser.isOpen():
+#                 self.ser.open()
+#             txt = '*IDN'
+#             read_back = self.query(txt)
+#             print(f"Connected to: {read_back}")
+#
+#             # tmp = self.ser.isOpen()
+#             # print("is open:", tmp)
+#             # return_value = self.get_status()
+#             return True
+#
+#     def send(self, cmd_srt):
+#         txt = f'{cmd_srt}\r\n'
+#         self.ser.write(txt.encode())
+#
+#     def query(self, cmd_srt):
+#         txt = f'{cmd_srt}?'
+#         self.send(txt)
+#         return self.ser.readline().decode()
+#
+#     def close(self):
+#         self.ser.close()
+#         self.ser = None
+#
+#
+#     # configuring reading time
+#     # on_off = 0 - off
+#     # on_off = 1 - on
+#     # status -  check status
+#     def conf_reading_time(self, on_off, check_val=1):
+#         cmd_list = ["OFF", "ON", "Unknown"]
+#         on_off = range_check(on_off,0,1,"ON/OFF state")
+#         check_val = range_check(check_val, 0, 1, "check_back bool val")
+#         txt = f'FORM:READ:TIME {cmd_list[on_off]}'
+#         self.send(txt)
+#         if check_val == 1:
+#             txt = 'FORM:READ:TIME?'
+#             read_back = int(self.query(txt))
+#             print(f"FORM:READ:TIME {cmd_list[read_back]}")
+#             return read_back
+#
+#     def conf_sys_date(self, yy=2021, mm=4, dd=23, check_val=1):
+#         yy = range_check(yy,2021,2200,"Year")
+#         mm = range_check(mm, 1, 12, "Month")
+#         dd = range_check(dd, 1, 31, "Day")
+#         check_val = range_check(check_val, 0, 1, "check_back bool val")
+#         txt = f'SYST:DATE {yy},{str(mm).zfill(2)},{dd}\r\n'
+#         self.ser.write(txt.encode())
+#
+#         if check_val == 1:
+#             txt = f'SYST:DATE?\r\n'
+#             self.ser.write(txt.encode())
+#             read_back = self.ser.readline().decode()
+#             print(f"SYST:DATE? {read_back}")
+#             return read_back
+#
+#     def conf_sys_time(self, hh=12, mm=20, ss=23, check_val=1):
+#         hh = range_check(hh, 0, 23, "hours")
+#         mm = range_check(mm, 0, 59, "minutes")
+#         ss = range_check(ss, 0, 59, "seconds")
+#         ss = round(ss,3)
+#         check_val = range_check(check_val, 0, 1, "check_back bool val")
+#         txt = f'SYST:TIME {str(hh).zfill(2)},{str(mm).zfill(2)},{str(ss).zfill(6)}\r\n'
+#         self.ser.write(txt.encode())
+#
+#         if check_val == 1:
+#             txt = f'SYST:TIME?\r\n'
+#             self.ser.write(txt.encode())
+#             read_back = self.ser.readline().decode()
+#             print(f"SYST:TIME? {read_back}")
+#             return read_back
+#
+#     def get_sys_time_scan(self, show_val=0):
+#         show_val = range_check(show_val, 0, 1, "show bool val")
+#         txt = f'SYST:TIME:SCAN?\r\n'
+#         self.ser.write(txt.encode())
+#         read_back = self.ser.readline().decode()
+#         if show_val ==1:
+#             print(f"{read_back}")
+#         return read_back
+#
+#     def read(self):
+#         txt = f'READ?\r\n'
+#         print(f"CMD:{txt} need to be checked")
+#         self.ser.write(txt.encode())
+#         read_back = self.ser.readline().decode()
+#         print(f"SYST:TIME? {read_back}")
+#         return read_back
+#
+#     def read(self):
+#         txt = f'READ?\r\n'
+#         print(f"CMD:{txt} need to be checked")
+#         self.ser.write(txt.encode())
+#         read_back = self.ser.readline().decode()
+#         print(f"SYST:TIME? {read_back}")
+#         return read_back
+#
+#     def configure(self):
+#         txt = f'READ?\r\n'
+#         print(f"CMD:{txt} need to be checked")
+#         self.ser.write(txt.encode())
+#         read_back = self.ser.readline().decode()
+#         print(f"SYST:TIME? {read_back}")
+#         return read_back
 
-    def __init__(self):
-        self.ser = None
 
-    def init(self, com_port, baudrate_var=115200):
-        com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]
-        if com_port not in com_port_list:
-            print("COM port is not found")
-            print("Please ensure that USB is connected")
-            print(f"Please check COM port Number. Currently it is {com_port} ")
-            print(f'Founded COM ports:{com_port_list}')
-            return False
-        else:
-            self.ser = serial.Serial(
-                port=com_port,
-                baudrate=baudrate_var,
-                timeout=0.1
-            )
-            if not self.ser.isOpen():
-                self.ser.open()
-            txt = '*IDN'
-            read_back = self.query(txt)
-            print(f"Connected to: {read_back}")
-
-            # tmp = self.ser.isOpen()
-            # print("is open:", tmp)
-            # return_value = self.get_status()
-            return True
-
-    def send(self, cmd_srt):
-        txt = f'{cmd_srt}\r\n'
-        self.ser.write(txt.encode())
-
-    def query(self, cmd_srt):
-        txt = f'{cmd_srt}?'
-        self.send(txt)
-        return self.ser.readline().decode()
-
-    def close(self):
-        self.ser.close()
-        self.ser = None
-
-
-    # configuring reading time
-    # on_off = 0 - off
-    # on_off = 1 - on
-    # status -  check status
-    def conf_reading_time(self, on_off, check_val=1):
-        cmd_list = ["OFF", "ON", "Unknown"]
-        on_off = range_check(on_off,0,1,"ON/OFF state")
-        check_val = range_check(check_val, 0, 1, "check_back bool val")
-        txt = f'FORM:READ:TIME {cmd_list[on_off]}'
-        self.send(txt)
-        if check_val == 1:
-            txt = 'FORM:READ:TIME?'
-            read_back = int(self.query(txt))
-            print(f"FORM:READ:TIME {cmd_list[read_back]}")
-            return read_back
-
-    def conf_sys_date(self, yy=2021, mm=4, dd=23, check_val=1):
-        yy = range_check(yy,2021,2200,"Year")
-        mm = range_check(mm, 1, 12, "Month")
-        dd = range_check(dd, 1, 31, "Day")
-        check_val = range_check(check_val, 0, 1, "check_back bool val")
-        txt = f'SYST:DATE {yy},{str(mm).zfill(2)},{dd}\r\n'
-        self.ser.write(txt.encode())
-
-        if check_val == 1:
-            txt = f'SYST:DATE?\r\n'
-            self.ser.write(txt.encode())
-            read_back = self.ser.readline().decode()
-            print(f"SYST:DATE? {read_back}")
-            return read_back
-
-    def conf_sys_time(self, hh=12, mm=20, ss=23, check_val=1):
-        hh = range_check(hh, 0, 23, "hours")
-        mm = range_check(mm, 0, 59, "minutes")
-        ss = range_check(ss, 0, 59, "seconds")
-        ss = round(ss,3)
-        check_val = range_check(check_val, 0, 1, "check_back bool val")
-        txt = f'SYST:TIME {str(hh).zfill(2)},{str(mm).zfill(2)},{str(ss).zfill(6)}\r\n'
-        self.ser.write(txt.encode())
-
-        if check_val == 1:
-            txt = f'SYST:TIME?\r\n'
-            self.ser.write(txt.encode())
-            read_back = self.ser.readline().decode()
-            print(f"SYST:TIME? {read_back}")
-            return read_back
-
-    def get_sys_time_scan(self, show_val=0):
-        show_val = range_check(show_val, 0, 1, "show bool val")
-        txt = f'SYST:TIME:SCAN?\r\n'
-        self.ser.write(txt.encode())
-        read_back = self.ser.readline().decode()
-        if show_val ==1:
-            print(f"{read_back}")
-        return read_back
-
-    def read(self):
-        txt = f'READ?\r\n'
-        print(f"CMD:{txt} need to be checked")
-        self.ser.write(txt.encode())
-        read_back = self.ser.readline().decode()
-        print(f"SYST:TIME? {read_back}")
-        return read_back
-
-    def read(self):
-        txt = f'READ?\r\n'
-        print(f"CMD:{txt} need to be checked")
-        self.ser.write(txt.encode())
-        read_back = self.ser.readline().decode()
-        print(f"SYST:TIME? {read_back}")
-        return read_back
-
-    def configure(self):
-        txt = f'READ?\r\n'
-        print(f"CMD:{txt} need to be checked")
-        self.ser.write(txt.encode())
-        read_back = self.ser.readline().decode()
-        print(f"SYST:TIME? {read_back}")
-        return read_back
-
-
-class communicator():
+class communicator(serial.Serial):
     def __init__(self):
         # Commands Subsystem
         # this is the list of Subsystem commands
+        super(communicator, self).__init__()
+        serial.Serial
         # super(communicator, self).__init__(port="COM10",baudrate=115200, timeout=0.1)
         print("communicator init")
         self.cmd = None
         self.ser = None
 
+    def int_init(self):
+        # super(communicator, self).__init__(port="COM10", baudrate=115200, timeout=0.1)
+        self.baudrate = 115200
+        self.port = "COM10"
+        self.open()
 
-
-    def init(self, com_port, baudrate_var=115200):
-        com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]
-        if com_port not in com_port_list:
-            print("COM port is not found")
-            print("Please ensure that USB is connected")
-            print(f"Please check COM port Number. Currently it is {com_port} ")
-            print(f'Founded COM ports:{com_port_list}')
-            return False
-        else:
-            self.ser = serial.Serial(
-                port=com_port,
-                baudrate=baudrate_var,
-                timeout=0.1
-            )
-            if not self.ser.isOpen():
-                self.ser.open()
-            txt = '*IDN'
-            read_back = self.query(txt)
-            print(f"Connected to: {read_back}")
-
-            # tmp = self.ser.isOpen()
-            # print("is open:", tmp)
-            # return_value = self.get_status()
-            return True
+    # def init(self, com_port, baudrate_var=115200):
+    #     com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]
+    #     if com_port not in com_port_list:
+    #         print("COM port is not found")
+    #         print("Please ensure that USB is connected")
+    #         print(f"Please check COM port Number. Currently it is {com_port} ")
+    #         print(f'Founded COM ports:{com_port_list}')
+    #         return False
+    #     else:
+    #         self.ser = serial.Serial(
+    #             port=com_port,
+    #             baudrate=baudrate_var,
+    #             timeout=0.1
+    #         )
+    #         if not self.ser.isOpen():
+    #             self.ser.open()
+    #         txt = '*IDN'
+    #         read_back = self.query(txt)
+    #         print(f"Connected to: {read_back}")
+    #
+    #         # tmp = self.ser.isOpen()
+    #         # print("is open:", tmp)
+    #         # return_value = self.get_status()
+    #         return True
 
     def send(self, param):
         # will put sending command here
         txt = f'{self.cmd} {param}\n\r'
         txt_debug = f'Sending: {txt}'
         print(txt_debug)
-        self.ser.write(txt_debug.encode())
+        self.write(txt_debug.encode())
         return txt_debug
 
     def query(self, cmd):
@@ -213,8 +219,8 @@ class communicator():
     #     return self.ser.readline().decode()
 
     def close(self):
-        self.ser.close()
-        self.ser = None
+        self.close()
+        # self.ser = None
 
 
 class results_processor:
@@ -222,7 +228,7 @@ class results_processor:
         print('RESULT')
 
 
-class storage(communicator):
+class storage(communicator, serial.Serial):
     def __init__(self):
         # super(communicator, self).__init__()
         # super(storage,self).__init__()
@@ -249,7 +255,7 @@ class storage(communicator):
         # self.trigger = trigger()
 
 
-class configure(communicator):
+class configure(communicator, serial.Serial):
     # availanle commands for CONFigure
     # CONFigure?
     # CONFigure:CURRent:AC
@@ -265,7 +271,7 @@ class configure(communicator):
     # CONFigure:VOLTage:DC
     def __init__(self):
         print("INIT CONFIGURE")
-        super(configure, self).__init__()
+        # super(configure, self).__init__()
         self.prefix = "CONFigure"
         self.cmd = "CONFigure"
         self.voltage = voltage(self.prefix)
@@ -297,14 +303,17 @@ class measure:
         self.current = current(self.f_prefix)
 
 
-class voltage(communicator):
+class voltage(communicator, serial.Serial):
     def __init__(self, prefix):
+        # super(voltage, self).__init__()
+
         self.prefix = prefix + ":" + "VOLTage"
+        self.cmd = self.prefix
         self.ac = ac(self.prefix)
         self.dc = dc(self.prefix)
 
 
-class current(communicator):
+class current(communicator, serial.Serial):
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "Current"
         self.ac = ac(self.prefix)
@@ -314,7 +323,7 @@ class current(communicator):
     #     txt = self.prefix
     #     print(txt)
 
-class ac(communicator):
+class ac(communicator,serial.Serial):
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "AC"
@@ -334,11 +343,14 @@ if __name__ == '__main__':
     # dev.init("COM10")
     # dev.send("COM10 send")
     cmd = storage()
+    cmd.int_init()
+
     # cmd.init("COM10")
 
     # cmd.send(152200)
     # cmd.write("write inheritant".encode())
-    # cmd.configure.send(1555)
-    cmd.configure.voltage.ac.send(5555)
+    cmd.configure.send(1555)
+    cmd.configure.voltage.send(200)
+    # cmd.configure.voltage.ac.send(5555)
 
-    cmd.close()
+    # cmd.close()
