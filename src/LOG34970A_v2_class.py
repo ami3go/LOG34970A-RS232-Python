@@ -164,7 +164,6 @@ class com_interface():
         self.ser = None
 
 
-
     def init(self, com_port, baudrate_var=115200):
         com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]
         if com_port not in com_port_list:
@@ -186,32 +185,19 @@ class com_interface():
 
             read_back = self.query(txt)
             print(f"Connected to: {read_back}")
-
-
-            # tmp = self.ser.isOpen()
-            # print("is open:", tmp)
-            # return_value = self.get_status()
             return True
-
-    # def send(self, txt, param):
-    #     # will put sending command here
-    #     txt = f'{txt} {param}'
-    #     txt_debug = f'Sending: {txt}'
-    #     print(txt_debug)
-    #     self.__send(txt)
-    #     return txt_debug
-
 
     def send(self, txt):
         # will put sending command here
         txt = f'{txt}\r\n'
-        print(txt)
+        #print(f'Sending: {txt}')
         self.ser.write(txt.encode())
 
     def query(self, cmd_srt):
         txt = f'{cmd_srt}?\r\n'
         self.ser.reset_input_buffer()
         self.ser.write(txt.encode())
+        #print(f'Query: {txt}')
         return_val = self.ser.readline().decode()
         return return_val
 
@@ -228,7 +214,31 @@ class str_return:
         # will put sending command here
         return self.cmd
 
+    def channels(self, *argv):
+        txt = ""
+        for arg in argv:
+            txt = f'{txt}{arg},'
+        txt = txt[:-1]
+        txt = f'{self.cmd} (@{txt})'
+        return txt
 
+    def ch_range(self, min, max, channels_num=20):
+        channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
+        channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
+        channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
+        channels = channels_num
+        slot_id = int(min/100)
+        slot_id = range_check(slot_id,1,3,"slot ID")
+        min = range_check(min, (slot_id*100+1), (slot_id*100+channels), " channels number")
+        max = range_check(max, (slot_id*100+1), (slot_id*100+channels), " channels number")
+        txt = f"{min},"
+        l = [f"{min},"]
+        for z in range(0, (max - min)):
+            l.append(f'{min + z + 1},')
+        txt = "".join(l)
+        txt = txt[:-1]
+        txt = f"{self.cmd} (@{txt})"
+        return txt
 
 class results_processor:
     def parse_output(self, output):
@@ -290,13 +300,6 @@ class configure(str_return):
         self.resistance = resistance(self.prefix)
         self.fresistance = fresistance(self.prefix)
         self.totalize = totalize(self.prefix)
-
-
-    def get(self):
-        txt = self.prefix
-        # print(txt)
-        return txt
-
 
 class measure:
     # command list :
@@ -594,6 +597,8 @@ if __name__ == '__main__':
     # dev.send(cmd.configure.frequency.combine(), 100)
     # dev.send(cmd.configure.period.combine(),100)
     # dev.send(cmd.configure.digital_byte.combine(), 100)
+    print(cmd.configure.combine())
+
     print("*" * 30)
     print(cmd.configure.current.ac.combine())
     print(cmd.configure.current.dc.combine())
