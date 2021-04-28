@@ -474,6 +474,13 @@ class resistance(str_return):
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "RESistance"
         self.cmd = self.prefix
+        self.prefix = self.cmd
+        self.Bandwidth = Bandwidth(self.prefix)
+        self.Range = Range(self.prefix)
+        self.Resolution = Resolution(self.prefix)
+        self.Aperture = Aperture(self.prefix)
+        self.NPLC = NPLC(self.prefix)
+        self.Ocompensated = Ocompensated(self.prefix)
 
 class fresistance(str_return):
     # These commands configure the channels for  4-wire (FRESistance) resistance
@@ -481,6 +488,13 @@ class fresistance(str_return):
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "FRESistance"
         self.cmd = self.prefix
+        self.prefix = self.cmd
+        self.Bandwidth = Bandwidth(self.prefix)
+        self.Range = Range(self.prefix)
+        self.Resolution = Resolution(self.prefix)
+        self.Aperture = Aperture(self.prefix)
+        self.NPLC = NPLC(self.prefix)
+        self.Ocompensated = Ocompensated(self.prefix)
 
 class totalize(str_return):
     # This command configures the instrument to read the specified totalizer
@@ -515,6 +529,8 @@ class dc(str_return):
         self.Bandwidth = Bandwidth(self.prefix)
         self.Range = Range(self.prefix)
         self.Resolution = Resolution(self.prefix)
+        self.Aperture = Aperture(self.prefix)
+        self.NPLC = NPLC(self.prefix)
 
 
 class Bandwidth(str_return):
@@ -539,8 +555,20 @@ class Resolution(str_return):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "RESolution"
 
+class Aperture(str_return):
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "APERture"
 
+class NPLC(str_return):
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "NPLC"
 
+class Ocompensated(str_return):
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "OCOMpensated"
 
 if __name__ == '__main__':
     # dev = LOG_34970A()
@@ -560,6 +588,7 @@ if __name__ == '__main__':
     # dev.send(cmd.configure.frequency.combine(), 100)
     # dev.send(cmd.configure.period.combine(),100)
     # dev.send(cmd.configure.digital_byte.combine(), 100)
+    print("*" * 30)
     print(cmd.configure.current.ac.combine())
     print(cmd.configure.current.dc.combine())
     print(cmd.configure.digital_byte.combine())
@@ -572,10 +601,44 @@ if __name__ == '__main__':
     print(cmd.configure.voltage.ac.combine())
     print(cmd.configure.voltage.dc.combine())
 
+    print("*" * 30)
     print(cmd.sense.current.ac.Bandwidth.combine())
     print(cmd.sense.current.ac.Range.combine())
     print(cmd.sense.current.ac.Range.Auto.combine())
     print(cmd.sense.current.ac.Resolution.combine())
 
+    print("*"*30)
+    print(cmd.sense.current.dc.Aperture.combine())
+    print(cmd.sense.current.dc.NPLC.combine())
+    print(cmd.sense.current.dc.Range.combine())
+    print(cmd.sense.current.dc.Range.Auto.combine())
+    print(cmd.sense.current.dc.Resolution.combine())
 
+    print("*" * 30)
+    print(cmd.sense.voltage.ac.Range.combine())
+    print(cmd.sense.voltage.ac.Resolution.combine())
+    print(cmd.sense.voltage.ac.Bandwidth.combine())
+
+    print("*" * 30)
+    print(cmd.sense.current.dc.Aperture.combine())
+    print(cmd.sense.current.dc.NPLC.combine())
+    print(cmd.sense.current.dc.Range.combine())
+    print(cmd.sense.current.dc.Range.Auto.combine())
+    print(cmd.sense.current.dc.Resolution.combine())
+
+    print("*" * 30)
+    print(cmd.sense.resistance.Aperture.combine())
+    print(cmd.sense.resistance.NPLC.combine())
+    print(cmd.sense.resistance.Ocompensated.combine())
+    print(cmd.sense.resistance.Range.combine())
+    print(cmd.sense.resistance.Range.Auto.combine())
+    print(cmd.sense.resistance.Resolution.combine())
+
+    print("*" * 30)
+    print(cmd.sense.fresistance.Aperture.combine())
+    print(cmd.sense.fresistance.NPLC.combine())
+    print(cmd.sense.fresistance.Ocompensated.combine())
+    print(cmd.sense.fresistance.Range.combine())
+    print(cmd.sense.fresistance.Range.Auto.combine())
+    print(cmd.sense.fresistance.Resolution.combine())
     # dev.close()
