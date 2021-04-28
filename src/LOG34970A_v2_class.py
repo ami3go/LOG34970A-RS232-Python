@@ -154,7 +154,7 @@ def range_check(val, min, max, val_name):
 #         return read_back
 
 
-class communicator():
+class com_interface():
     def __init__(self):
         # Commands Subsystem
         # this is the list of Subsystem commands
@@ -214,27 +214,14 @@ class communicator():
         self.ser = None
 
 
-class str_ret:
+class str_return:
     def __init__(self):
         self.cmd = None
 
-    def send(self):
+    def combine(self):
         # will put sending command here
         return self.cmd
 
-
-    # def send(self, cmd_srt):
-    #     txt = f'{cmd_srt}\r\n'
-    #     self.ser.write(txt.encode())
-    #
-    # def query(self, cmd_srt):
-    #     txt = f'{cmd_srt}?'
-    #     self.send(txt)
-    #     return self.ser.readline().decode()
-
-    def close(self):
-        self.ser.close()
-        self.ser = None
 
 
 class results_processor:
@@ -262,34 +249,42 @@ class storage():
         # self.mmemory = mmemory()
         # self.output = output()
         # self.route = route()
-        # self.sense = sense()
+        self.sense = sense()
         # self.source = source()
         # self.status = status()
         # self.system = system()
         # self.trigger = trigger()
 
 
-class configure():
+class configure(str_return):
     # availanle commands for CONFigure
-    # CONFigure?
-    # CONFigure:CURRent:AC
-    # CONFigure:CURRent:DC
-    # CONFigure:DIGital:BYTE
-    # CONFigure:FREQuency
-    # CONFigure:FRESistance
-    # CONFigure:PERiod
-    # CONFigure:RESistance
-    # CONFigure:TEMPerature
-    # CONFigure:TOTalize
-    # CONFigure:VOLTage:AC
-    # CONFigure:VOLTage:DC
+    # * CONFigure?
+    # * CONFigure:CURRent:AC
+    # * CONFigure:CURRent:DC
+    # * CONFigure:DIGital:BYTE
+    # * CONFigure:FREQuency
+    # * CONFigure:FRESistance
+    # *  CONFigure:PERiod
+    # * CONFigure:RESistance
+    # *  CONFigure:TEMPerature
+    # * CONFigure:TOTalize
+    # * CONFigure:VOLTage:AC
+    # * CONFigure:VOLTage:DC
     def __init__(self):
         print("INIT CONFIGURE")
         super(configure, self).__init__()
         self.prefix = "CONFigure"
         self.cmd = "CONFigure"
-        self.voltage = voltage(self.prefix)
         self.current = current(self.prefix)
+        self.voltage = voltage(self.prefix)
+        self.digital_byte = digital_byte(self.prefix)
+        self.frequency = frequency(self.prefix)
+        self.period = period(self.prefix)
+        self.temperature = temperature(self.prefix)
+        self.resistance = resistance(self.prefix)
+        self.fresistance = fresistance(self.prefix)
+        self.totalize = totalize(self.prefix)
+
 
     def get(self):
         txt = self.prefix
@@ -312,9 +307,113 @@ class measure:
     # MEASure:VOLTage:DC?
 
     def __init__(self):
-        self.f_prefix = "MEASure"
-        self.voltage = voltage(self.f_prefix)
-        self.current = current(self.f_prefix)
+        print("INIT Measure")
+        self.cmd = "MEASure"
+        self.prefix = "MEASure"
+        self.current = current(self.prefix)
+        self.voltage = voltage(self.prefix)
+        self.digital_byte = digital_byte(self.prefix)
+        self.frequency = frequency(self.prefix)
+        self.period = period(self.prefix)
+        self.temperature = temperature(self.prefix)
+        self.resistance = resistance(self.prefix)
+        self.fresistance = fresistance(self.prefix)
+        self.totalize = totalize(self.prefix)
+
+class sense:
+    # AC Current
+    # [SENSe:]CURRent:AC:BANDwidth
+    # [SENSe:]CURRent:AC:BANDwidth?
+    # [SENSe:]CURRent:AC:RANGe
+    # [SENSe:]CURRent:AC:RANGe?
+    # [SENSe:]CURRent:AC:RANGe:AUTO
+    # [SENSe:]CURRent:AC:RANGe:AUTO
+    # [SENSe:]CURRent:AC:RESolution
+    # [SENSe:]CURRent:AC:RESolution?
+    # DC Current
+    # [SENSe:]CURRent:DC:APERture
+    # [SENSe:]CURRent:DC:APERture?
+    # [SENSe:]CURRent:DC:NPLC
+    # [SENSe:]CURRent:DC:NPLC?
+    # [SENSe:]CURRent:DC:RANGe
+    # [SENSe:]CURRent:DC:RANGe?
+    # [SENSe:]CURRent:DC:RANGe:AUTO
+    # [SENSe:]CURRent:DC:RANGe:AUTO
+    # [SENSe:]CURRent:DC:RESolution
+    # [SENSe:]CURRent:DC:RESolution?
+    # AC Voltage
+    # [SENSe:]VOLTage:AC:RANGe
+    # [SENSe:]VOLTage:AC:RANGe?
+    # [SENSe:]VOLTage:AC:RANGe:AUTO
+    # [SENSe:]VOLTage:AC:RANGe:AUTO?
+    # [SENSe:]VOLTage:AC:BANDwidth
+    # [SENSe:]VOLTage:AC:BANDwidth?
+    # DC Current
+    # [SENSe:]VOLTage:DC:APERture
+    # [SENSe:]VOLTage:DC:APERture?
+    # [SENSe:]VOLTage:DC:NPLC
+    # [SENSe:]VOLTage:DC:NPLC?
+    # [SENSe:]VOLTage:DC:RANGe
+    # [SENSe:]VOLTage:DC:RANGe?
+    # [SENSe:]VOLTage:DC:RANGe:AUTO
+    # [SENSe:]VOLTage:DC:RANGe:AUTO?
+    # [SENSe:]VOLTage:DC:RESolution
+    # [SENSe:]VOLTage:DC:RESolution?
+    # 2-Wire Resistance
+    # [SENSe:]RESistance:APERture
+    # [SENSe:]RESistance:APERture?
+    # [SENSe:]RESistance:NPLC
+    # [SENSe:]RESistance:NPLC?
+    # [SENSe:]RESistance:OCOMpensated
+    # [SENSe:]RESistance:OCOMpensated?
+    # [SENSe:]RESistance:RANGe
+    # [SENSe:]RESistance:RANGe?
+    # [SENSe:]RESistance:RANGe:AUTO
+    # [SENSe:]RESistance:RANGe:AUTO?
+    # [SENSe:]RESistance:RESolution
+    # [SENSe:]RESistance:RESolution?
+    # 4-Wire Resistance
+    # [SENSe:]FRESistance:APERture
+    # [SENSe:]FRESistance:APERture?
+    # [SENSe:]FRESistance:NPLC
+    # [SENSe:]FRESistance:NPLC?
+    # [SENSe:]FRESistance:OCOMpensated
+    # [SENSe:]FRESistance:OCOMpensated?
+    # [SENSe:]FRESistance:RANGe
+    # [SENSe:]FRESistance:RANGe?
+    # [SENSe:]FRESistance:RANGe:AUTO
+    # [SENSe:]FRESistance:RANGe:AUTO?
+    # [SENSe:]FRESistance:RESolution
+    # [SENSe:]FRESistance:RESolution?
+    # Frequency
+    # [SENSe:]FREQuency:APERture
+    # [SENSe:]FREQuency:APERture?
+    # [SENSe:]FREQuency:RANGe:LOWer
+    # [SENSe:]FREQuency:RANGe:LOWer?
+    # [SENSe:]FREQuency:VOLTage:RANGe
+    # [SENSe:]FREQuency:VOLTage:RANGe?
+    # [SENSe:]FREQuency:VOLTage:RANGe:AUTO
+    # [SENSe:]FREQuency:VOLTage:RANGe:AUTO?
+
+    def __init__(self):
+        print("INIT Sense")
+        self.cmd = "SENSe"
+        self.prefix = "SENSe"
+        self.current = current(self.prefix)
+        self.voltage = voltage(self.prefix)
+        self.digital_byte = digital_byte(self.prefix)
+        self.frequency = frequency(self.prefix)
+        self.period = period(self.prefix)
+        self.temperature = temperature(self.prefix)
+        self.resistance = resistance(self.prefix)
+        self.fresistance = fresistance(self.prefix)
+        self.totalize = totalize(self.prefix)
+
+
+
+#
+#
+#
 
 
 class voltage():
@@ -330,25 +429,117 @@ class current():
         self.ac = ac(self.prefix)
         self.dc = dc(self.prefix)
 
-    # def v_print(self):
-    #     txt = self.prefix
-    #     print(txt)
+class digital_byte(str_return):
+    #This command configures the instrument to scan the specified digital
+    #input channels on the multifunction module as byte data, but does not
+    #initiate the scan. This command redefines the scan list.
+    #The digital input channels are numbered "s01" (LSB) and "s02"
+    #(MSB), where s is the first digit of the slot number.
+    # example: CONF:DIG:BYTE (@101:102)
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "DIG:BYTE"
+        self.cmd = self.prefix
 
-class ac(str_ret):
+class frequency(str_return):
+    #These commands configure the channels for frequency or period
+    #measurements, but they do not initiate the scan.
+    #The CONFigure command does not place the instrument in the "wait-fortrigger"
+    #state. Use the INITiate or READ? command in conjunction with
+    #CONFigure to place the instrument in the "wait-for-trigger" state.
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "FREQuency"
+        self.cmd = self.prefix
+
+class period(str_return):
+    # These commands configure the channels for frequency or period
+    # measurements, but they do not initiate the scan.
+    # The CONFigure command does not place the instrument in the "wait-fortrigger"
+    # state. Use the INITiate or READ? command in conjunction with
+    # CONFigure to place the instrument in the "wait-for-trigger" state.
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "PERiod"
+        self.cmd = self.prefix
+
+class temperature(str_return):
+    # These commands configure the channels for temperature measurements
+    # but do not initiate the scan. If you omit the optional <ch_list> parameter,
+    # this command applies to the currently defined scan list.
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "TEMPerature"
+        self.cmd = self.prefix
+
+class resistance(str_return):
+    # These commands configure the channels for 2-wire (RESistance)
+    # resistance measurements but do not initiate the scan.
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "RESistance"
+        self.cmd = self.prefix
+
+class fresistance(str_return):
+    # These commands configure the channels for  4-wire (FRESistance) resistance
+    # measurements but do not initiate the scan.
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "FRESistance"
+        self.cmd = self.prefix
+
+class totalize(str_return):
+    # This command configures the instrument to read the specified totalizer
+    # channels on the multifunction module but does not initiate the scan. To
+    # read the totalizer during a scan without resetting the count, set the
+    # <mode> to READ. To read the totalizer during a scan and reset the count
+    # to 0 after it is read, set the <mode> to RRESet (this means "read and
+    # reset").
+    # CONFigure:TOTalize <mode: READ|RRESet>,(@<scan_list>)
+
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "TOTalize"
+        self.cmd = self.prefix
+
+
+class ac(str_return):
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "AC"
+        self.prefix = self.cmd
+        self.Bandwidth = Bandwidth(self.prefix)
+        self.Range = Range(self.prefix)
+        self.Resolution = Resolution(self.prefix)
 
-    def get(self):
-        return self.cmd
 
-class dc(str_ret):
+
+class dc(str_return):
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "DC"
+        self.prefix = self.cmd
+        self.Bandwidth = Bandwidth(self.prefix)
+        self.Range = Range(self.prefix)
+        self.Resolution = Resolution(self.prefix)
 
-    def get(self):
-        return self.cmd
+
+class Bandwidth(str_return):
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "BANDwidth"
+
+
+class Range(str_return):
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "RANGe"
+        self.Auto = Auto(self.prefix)
+
+class Auto(str_return):
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "AUTO"
+
+class Resolution(str_return):
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "RESolution"
+
+
 
 
 if __name__ == '__main__':
@@ -356,14 +547,35 @@ if __name__ == '__main__':
     # dev.init("COM10")
     # dev.send("COM10 send")
     cmd = storage()
-    dev = communicator()
-    dev.init("COM10")
+    # dev = com_interface()
+    # dev.init("COM10")
     # cmd.init("COM10")
     # cmd.send(152200)
     # cmd.write("write inheritant".encode())
     # cmd.configure.send(1555)
     # cmd.configure.voltage.ac.send(5555)
     # cmd.configure.voltage.ac.send()
-    dev.send(cmd.configure.voltage.ac.send(), 100)
-    dev.send(cmd.measure.voltage.ac.send(), 10)
-    dev.close()
+    # dev.send(cmd.configure.voltage.ac.combine(), 100)
+    # dev.send(cmd.measure.voltage.ac.combine(), 10)
+    # dev.send(cmd.configure.frequency.combine(), 100)
+    # dev.send(cmd.configure.period.combine(),100)
+    # dev.send(cmd.configure.digital_byte.combine(), 100)
+    print(cmd.configure.current.ac.combine())
+    print(cmd.configure.current.dc.combine())
+    print(cmd.configure.digital_byte.combine())
+    print(cmd.configure.frequency.combine())
+    print(cmd.configure.fresistance.combine())
+    print(cmd.configure.period.combine())
+    print(cmd.configure.resistance.combine())
+    print(cmd.configure.temperature.combine())
+    print(cmd.configure.totalize.combine())
+    print(cmd.configure.voltage.ac.combine())
+    print(cmd.configure.voltage.dc.combine())
+
+    print(cmd.sense.current.ac.Bandwidth.combine())
+    print(cmd.sense.current.ac.Range.combine())
+    print(cmd.sense.current.ac.Range.Auto.combine())
+    print(cmd.sense.current.ac.Resolution.combine())
+
+
+    # dev.close()
