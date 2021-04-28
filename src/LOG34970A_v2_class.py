@@ -181,33 +181,39 @@ class com_interface():
             )
             if not self.ser.isOpen():
                 self.ser.open()
+
             txt = '*IDN'
+
             read_back = self.query(txt)
             print(f"Connected to: {read_back}")
+
 
             # tmp = self.ser.isOpen()
             # print("is open:", tmp)
             # return_value = self.get_status()
             return True
 
-    def send(self, txt, param):
-        # will put sending command here
-        txt = f'{txt} {param}'
-        txt_debug = f'Sending: {txt}'
-        print(txt_debug)
-        self.__send(txt)
-        return txt_debug
+    # def send(self, txt, param):
+    #     # will put sending command here
+    #     txt = f'{txt} {param}'
+    #     txt_debug = f'Sending: {txt}'
+    #     print(txt_debug)
+    #     self.__send(txt)
+    #     return txt_debug
 
 
-    def __send(self, txt):
+    def send(self, txt):
         # will put sending command here
-        txt = f'{txt}\n\r'
+        txt = f'{txt}\r\n'
+        print(txt)
         self.ser.write(txt.encode())
 
     def query(self, cmd_srt):
-        txt = f'{cmd_srt}?'
-        self.__send(txt)
-        return self.ser.readline().decode()
+        txt = f'{cmd_srt}?\r\n'
+        self.ser.reset_input_buffer()
+        self.ser.write(txt.encode())
+        return_val = self.ser.readline().decode()
+        return return_val
 
     def close(self):
         self.ser.close()
