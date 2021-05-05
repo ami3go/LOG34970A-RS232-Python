@@ -261,6 +261,28 @@ class str_return:
         return txt
 
 
+class req_only:
+    def __init__(self):
+        self.cmd = None
+
+    def req(self):
+        return self.cmd + "?"
+
+class ch_single:
+    def __init__(self):
+        self.cmd = None
+
+    def ch_single(self, ch_num, max_ch_number=20):
+        channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
+        channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
+        channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
+        channels = max_ch_number
+        slot_id = int(ch_num / 100)
+        slot_id = range_check(slot_id, 1, 3, "slot ID")
+        ch_num = range_check(ch_num, (slot_id * 100 + 1), (slot_id * 100 + channels), " channels number")
+        txt = f'{self.cmd} (@{ch_num})'
+        return txt
+
 
 
 class select_channel:
@@ -513,6 +535,10 @@ class route:
         self.cmd = "ROUTe"
         self.prefix = "ROUTe"
         self.scan = scan(self.prefix)
+        self.open = open_channel(self.prefix)
+        self.close = close_channel(self.prefix)
+        self.done = done(self.prefix)
+        self.monitor = monitor(self.prefix)
 
 
 # --------------------------------------------
@@ -533,23 +559,99 @@ class init(str_return):
         self.prefix = "INIT"
         self.cmd = "INIT"
 
+
+# part of ROUTE class
 class scan(str_return):
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "SCAN"
         self.cmd = self.prefix
         self.size = size(self.prefix)
 
-class size(str_return):
+# part of ROUTE: SCAN class
+class size(req_only):
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "SIZE"
         self.cmd = self.prefix
+
+# part of ROUTE class
+class open_channel(str_return):
+    # This command opens the specified channels on a multiplexer or switch
+    # module.
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "OPEN"
+        self.cmd = self.prefix
+        self.size = size(self.prefix)
+
+# part of ROUTE class
+class close_channel(str_return):
+    # This command closes the specified channels on a multiplexer or switch
+    # module. On the multiplexer modules, if any channel on the module is
+    # defined to be part of the scan list, attempting to send this command will
+    # result in an error.
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "CLOSe"
+        self.cmd = self.prefix
+        self.exclusive = exclusive(self.prefix)
+
+class exclusive(str_return):
+    # This command opens all channels on a multiplexer or switch module and
+    # then closes the specified channels. On the multiplexer modules, if any
+    # channel on the module is defined to be part of the scan list, attempting to
+    # send this command will result in an error.
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "EXCLusive"
+        self.cmd = self.prefix
+
+class done(req_only):
+    # This queries the status of all relay operations on cards not involved in the
+    # scan and returns a 1 when all relay operations are finished (even during
+    # a scan). ONLY -> ROUTe:DONE?
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "DONE"
+        self.cmd = self.prefix
+
+class monitor(req_only, ch_single):
+    # This command/query selects the channel to be displayed on the front
+    # panel. Only one channel can be monitored at a time.
+    # ROUTe:MONitor
+    # ROUTe:MONitor?
+    # ROUTe:MONitor:DATA?
+    # ROUTe:MONitor:STATe
+    # ROUTe:MONitor:STATe?
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "MONitor"
+        self.cmd = self.prefix
+        self.data = data(self.prefix)
+        self.state = state(self.prefix)
+
+class data(req_only):
+    # This query reads the monitor data from the selected channel. It returns
+    # the reading only; the units, time, channel, and alarm information are not
+    # returned (the FORMat:READing commands do not apply to monitor
+    # readings).
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "DATA"
+        self.cmd = self.prefix
+
+class state(req_only):
+    # This query reads the monitor data from the selected channel. It returns
+    # the reading only; the units, time, channel, and alarm information are not
+    # returned (the FORMat:READing commands do not apply to monitor
+    # readings).
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "STATe"
+        self.cmd = self.prefix
+    def mode_on(self):
+        return self.prefix + " 1"
+
+    def mode_off(self):
+        return self.prefix + " 0"
 
 class voltage():
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "VOLTage"
         self.ac = ac(self.prefix)
         self.dc = dc(self.prefix)
-
 
 class current():
     def __init__(self, prefix):
@@ -784,7 +886,18 @@ if __name__ == '__main__':
     print(cmd.read.ch_range(0, 301, 305))
     print(cmd.read.ch_range(1, 301, 305))
     print(cmd.read.ch_list(1, 301, 302))
-    print(cmd.sense.voltage.ac.Range.ch_range(1, 301, 320))
+
+    print("*" * 30)
     print(cmd.route.scan.str())
     print(cmd.route.scan.size.req())
     print(cmd.route.scan.ch_range(0, 301, 320))
+    print(cmd.route.close.exclusive.str())
+    print(cmd.route.close.exclusive.ch_range(0,110,120))
+    print(cmd.route.open.req())
+    print(cmd.route.scan.size.req())
+    print(cmd.route.done.req())
+    print(cmd.route.monitor.req())
+    print(cmd.route.monitor.ch_single(320))
+    print(cmd.route.monitor.state.mode_on())
+    print(cmd.route.monitor.state.mode_off())
+    print(cmd.route.monitor.state.req())
