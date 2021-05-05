@@ -181,7 +181,7 @@ class com_interface():
             if not self.ser.isOpen():
                 self.ser.open()
 
-            txt = '*IDN'
+            txt = '*IDN?'
 
             read_back = self.query(txt)
             print(f"Connected to: {read_back}")
@@ -192,14 +192,23 @@ class com_interface():
         txt = f'{txt}\r\n'
         #print(f'Sending: {txt}')
         self.ser.write(txt.encode())
+    # an old variant of query
+    # def query(self, cmd_srt):
+    #     txt = f'{cmd_srt}?\r\n'
+    #     self.ser.reset_input_buffer()
+    #     self.ser.write(txt.encode())
+    #     #print(f'Query: {txt}')
+    #     return_val = self.ser.readline().decode()
+    #     return return_val
 
     def query(self, cmd_srt):
-        txt = f'{cmd_srt}?\r\n'
+        txt = f'{cmd_srt}\r\n'
         self.ser.reset_input_buffer()
         self.ser.write(txt.encode())
-        #print(f'Query: {txt}')
+        # print(f'Query: {txt}')
         return_val = self.ser.readline().decode()
         return return_val
+
 
     def close(self):
         self.ser.close()
@@ -209,19 +218,56 @@ class com_interface():
 class str_return:
     def __init__(self):
         self.cmd = None
-        super(str_return, self).__init__()
-        # self.channels = channel_ranges(self.cmd)
 
-    def combine(self):
+
+    def str(self):
         # will put sending command here
         return self.cmd
 
-    def request(self):
-        self.cmd = self.cmd + "?"
-        return self.cmd
+    def req(self):
+        return self.cmd + "?"
 
 
-    def channels(self, *argv):
+    def ch_list(self,is_req, *argv):
+        req_txt = ""
+        if is_req == 1:
+            req_txt = "?"
+        txt = ""
+        for arg in argv:
+            txt = f'{txt}{arg},'
+        txt = txt[:-1]
+        txt = f'{self.cmd}{req_txt} (@{txt})'
+        return txt
+
+    def ch_range(self,is_req, min, max, channels_num=20):
+        channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
+        channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
+        channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
+        req_txt = ""
+        if is_req == 1:
+            req_txt = "?"
+        channels = channels_num
+        slot_id = int(min/100)
+        slot_id = range_check(slot_id,1,3,"slot ID")
+        min = range_check(min, (slot_id*100+1), (slot_id*100+channels), " channels number")
+        max = range_check(max, (slot_id*100+1), (slot_id*100+channels), " channels number")
+        txt = f"{min},"
+        l = [f"{min},"]
+        for z in range(0, (max - min)):
+            l.append(f'{min + z + 1},')
+        txt = "".join(l)
+        txt = txt[:-1]
+        txt = f"{self.cmd}{req_txt} (@{txt})"
+        return txt
+
+
+
+
+class select_channel:
+    def __init__(self, cmd):
+        self.cmd = None
+
+    def ch_list(self, *argv):
         txt = ""
         for arg in argv:
             txt = f'{txt}{arg},'
@@ -248,38 +294,10 @@ class str_return:
         return txt
 
 
-# class channel_ranges:
-#     def __init__(self, cmd):
-#         self.cmd = None
-#
-#     def channels(self, *argv):
-#         txt = ""
-#         for arg in argv:
-#             txt = f'{txt}{arg},'
-#         txt = txt[:-1]
-#         txt = f'{self.cmd} (@{txt})'
-#         return txt
-#
-#     def ch_range(self, min, max, channels_num=20):
-#         channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
-#         channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
-#         channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
-#         channels = channels_num
-#         slot_id = int(min/100)
-#         slot_id = range_check(slot_id,1,3,"slot ID")
-#         min = range_check(min, (slot_id*100+1), (slot_id*100+channels), " channels number")
-#         max = range_check(max, (slot_id*100+1), (slot_id*100+channels), " channels number")
-#         txt = f"{min},"
-#         l = [f"{min},"]
-#         for z in range(0, (max - min)):
-#             l.append(f'{min + z + 1},')
-#         txt = "".join(l)
-#         txt = txt[:-1]
-#         txt = f"{self.cmd} (@{txt})"
-#         return txt
-
-
-
+class make_request(select_channel):
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + "?"
 
 
 
@@ -290,6 +308,8 @@ class results_processor:
 
 class storage():
     def __init__(self):
+        self.cmd = None
+        self.prefix = None
         # super(communicator, self).__init__()
         # super(storage,self).__init__()
         # communicator.init(self, "COM10")
@@ -314,6 +334,8 @@ class storage():
         # self.system = system()
         # self.trigger = trigger()
         self.read = read()
+        self.init = init()
+        self.route = route()
 
 
 class configure(str_return):
@@ -462,12 +484,65 @@ class sense:
         self.fresistance = fresistance(self.prefix)
         self.totalize = totalize(self.prefix)
 
+class route:
+    # Command Summary
+    # ROUTe:CHANnel:ADVance:SOURce
+    # ROUTe:CHANnel:ADVance:SOURce?
+    # ROUTe:CHANnel:DELay
+    # ROUTe:CHANnel:DELay?
+    # ROUTe:CHANnel:DELay:AUTO
+    # ROUTe:CHANnel:DELay:AUTO?
+    # ROUTe:CHANnel:FWIRe
+    # ROUTe:CHANnel:FWIRe?
+    # ROUTe:CLOSe
+    # ROUTe:CLOSe?
+    # ROUTe: CLOSe:EXCLusive
+    # ROUTe: DONE?
+    # ROUTe: MONitor
+    # ROUTe: MONitor?
+    # ROUTe: MONitor:DATA?
+    # ROUTe: MONitor:STATe
+    # ROUTe: MONitor:STATe?
+    # ROUTe: OPEN
+    # ROUTe: OPEN?
+    # ROUTe: SCAN
+    # ROUTe: SCAN?
+    # ROUTe: SCAN:SIZE?
+    def __init__(self):
+        print("INIT ROUTE")
+        self.cmd = "ROUTe"
+        self.prefix = "ROUTe"
+        self.scan = scan(self.prefix)
 
 
-#
-#
-#
+# --------------------------------------------
+#             READ
+# --------------------------------------------
+class read(str_return):
+    def __init__(self):
+        print("INIT Read")
+        self.prefix = "READ"
+        self.cmd = "READ"
 
+# --------------------------------------------
+#             INIT
+# --------------------------------------------
+class init(str_return):
+    def __init__(self):
+        print("INIT INIT")
+        self.prefix = "INIT"
+        self.cmd = "INIT"
+
+class scan(str_return):
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "SCAN"
+        self.cmd = self.prefix
+        self.size = size(self.prefix)
+
+class size(str_return):
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "SIZE"
+        self.cmd = self.prefix
 
 class voltage():
     def __init__(self, prefix):
@@ -626,11 +701,7 @@ class Ocompensated(str_return):
         self.cmd = self.prefix + ":" + "OCOMpensated"
 
 
-class read(str_return):
-    def __init__(self):
-        print("INIT Read")
-        self.prefix = "READ"
-        self.cmd = "READ"
+
 
 
 
@@ -710,7 +781,10 @@ if __name__ == '__main__':
     # print(cmd.sense.fresistance.Resolution.combine())
     # # dev.close()
     # print(cmd.read.combine())
-
-    print(cmd.configure.voltage.ac.combine())
-    print(cmd.configure.voltage.ac.request())
-    print(cmd.read.request())
+    print(cmd.read.ch_range(0, 301, 305))
+    print(cmd.read.ch_range(1, 301, 305))
+    print(cmd.read.ch_list(1, 301, 302))
+    print(cmd.sense.voltage.ac.Range.ch_range(1, 301, 320))
+    print(cmd.route.scan.str())
+    print(cmd.route.scan.size.req())
+    print(cmd.route.scan.ch_range(0, 301, 320))
