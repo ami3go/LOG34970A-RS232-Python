@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d1d4e796-9773-4182-b7a5-812f3cd0b65c" name="Default Changelist" comment="updated working example. &#10;added logging into txt file">
+    <list default="true" id="d1d4e796-9773-4182-b7a5-812f3cd0b65c" name="Default Changelist" comment="working on request class">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Examples/Logger_class_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/Logger_class_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Examples/Logger_class_v2_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/Logger_class_v2_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Examples/log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/log.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/LOG34970A_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/LOG34970A_class.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -40,7 +39,7 @@
       <recent name="C:\Users\achestni\Desktop\PycharmProjects\Libraries\LOG34970A\Examples" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.LOG34970A_v2_class">
+  <component name="RunManager" selected="Python.Logger_class_v2_test">
     <configuration name="LOG34970A_v2_class" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="DMM34411A" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -127,8 +126,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.LOG34970A_v2_class" />
         <item itemvalue="Python.Logger_class_v2_test" />
+        <item itemvalue="Python.LOG34970A_v2_class" />
         <item itemvalue="Python.test_code" />
         <item itemvalue="Python.Logger_class_test" />
       </list>
@@ -206,7 +205,14 @@
       <option name="project" value="LOCAL" />
       <updated>1619617022602</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="working on request class">
+      <created>1620201776405</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1620201776405</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -229,17 +235,7 @@
     <MESSAGE value="Fixed:&#10;.send()&#10;.query()&#10;checked for working response on instrument" />
     <MESSAGE value="Running first example to grab 20 channels&#10;added methods tp class str_return&#10;&#10; *def channels(self, *argv): -  to accept channels with &quot;,&quot; separator&#10; *def ch_range(self, min, max, channels_num=20): - to generate a channels line based on min and max number." />
     <MESSAGE value="updated working example. &#10;added logging into txt file" />
-    <option name="LAST_COMMIT_MESSAGE" value="updated working example. &#10;added logging into txt file" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/LOG34970A_v2_class.py</url>
-          <line>210</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+    <MESSAGE value="working on request class" />
+    <option name="LAST_COMMIT_MESSAGE" value="working on request class" />
   </component>
 </project>

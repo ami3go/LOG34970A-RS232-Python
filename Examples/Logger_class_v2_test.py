@@ -5,30 +5,21 @@ import time
 log = logger_class.com_interface()
 cmd = logger_class.storage()
 log.init("COM11")
-txt = f"{cmd.configure.voltage.dc.ch_range(301,320)}"
-cmd.sense.voltage.ac.Range
-cmd.configure.voltage.ac.Range
 
-print(txt)
-log.send(txt)
+log.send(cmd.configure.voltage.dc.ch_range(0, 301, 320))
 time.sleep(3)
 
-txt ="ROUT:SCAN (@301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320)"
-log.send(txt)
-
+log.send(cmd.route.scan.ch_range(0, 301, 320))
 time.sleep(3)
-print(log.query(cmd.configure.combine()))
 
-txt ="INIT"
-log.send(txt)
+log.send(cmd.init.str())
 time.sleep(5)
 
-txt="READ? (@301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320)"
-txt="READ"
+
 file_log = open("log.txt","w+")
 
 for i in range(0, 10000):
-    srt = log.query(txt)
+    srt = log.query(cmd.read.req())
     # print(srt)
     array = srt.split(",")
     for z in range(0, len(array)):
