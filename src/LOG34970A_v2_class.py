@@ -209,10 +209,17 @@ class com_interface():
 class str_return:
     def __init__(self):
         self.cmd = None
+        super(str_return, self).__init__()
+        # self.channels = channel_ranges(self.cmd)
 
     def combine(self):
         # will put sending command here
         return self.cmd
+
+    def request(self):
+        self.cmd = self.cmd + "?"
+        return self.cmd
+
 
     def channels(self, *argv):
         txt = ""
@@ -239,6 +246,42 @@ class str_return:
         txt = txt[:-1]
         txt = f"{self.cmd} (@{txt})"
         return txt
+
+
+# class channel_ranges:
+#     def __init__(self, cmd):
+#         self.cmd = None
+#
+#     def channels(self, *argv):
+#         txt = ""
+#         for arg in argv:
+#             txt = f'{txt}{arg},'
+#         txt = txt[:-1]
+#         txt = f'{self.cmd} (@{txt})'
+#         return txt
+#
+#     def ch_range(self, min, max, channels_num=20):
+#         channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
+#         channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
+#         channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
+#         channels = channels_num
+#         slot_id = int(min/100)
+#         slot_id = range_check(slot_id,1,3,"slot ID")
+#         min = range_check(min, (slot_id*100+1), (slot_id*100+channels), " channels number")
+#         max = range_check(max, (slot_id*100+1), (slot_id*100+channels), " channels number")
+#         txt = f"{min},"
+#         l = [f"{min},"]
+#         for z in range(0, (max - min)):
+#             l.append(f'{min + z + 1},')
+#         txt = "".join(l)
+#         txt = txt[:-1]
+#         txt = f"{self.cmd} (@{txt})"
+#         return txt
+
+
+
+
+
 
 class results_processor:
     def parse_output(self, output):
@@ -270,6 +313,7 @@ class storage():
         # self.status = status()
         # self.system = system()
         # self.trigger = trigger()
+        self.read = read()
 
 
 class configure(str_return):
@@ -524,9 +568,10 @@ class ac(str_return):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "AC"
         self.prefix = self.cmd
-        self.Bandwidth = Bandwidth(self.prefix)
-        self.Range = Range(self.prefix)
-        self.Resolution = Resolution(self.prefix)
+        if self.prefix.find("SENSe:") != -1:
+            self.Bandwidth = Bandwidth(self.prefix)
+            self.Range = Range(self.prefix)
+            self.Resolution = Resolution(self.prefix)
 
 
 
@@ -535,11 +580,12 @@ class dc(str_return):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "DC"
         self.prefix = self.cmd
-        self.Bandwidth = Bandwidth(self.prefix)
-        self.Range = Range(self.prefix)
-        self.Resolution = Resolution(self.prefix)
-        self.Aperture = Aperture(self.prefix)
-        self.NPLC = NPLC(self.prefix)
+        if self.prefix.find("SENSe:") != -1:
+            self.Bandwidth = Bandwidth(self.prefix)
+            self.Range = Range(self.prefix)
+            self.Resolution = Resolution(self.prefix)
+            self.Aperture = Aperture(self.prefix)
+            self.NPLC = NPLC(self.prefix)
 
 
 class Bandwidth(str_return):
@@ -579,6 +625,15 @@ class Ocompensated(str_return):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "OCOMpensated"
 
+
+class read(str_return):
+    def __init__(self):
+        print("INIT Read")
+        self.prefix = "READ"
+        self.cmd = "READ"
+
+
+
 if __name__ == '__main__':
     # dev = LOG_34970A()
     # dev.init("COM10")
@@ -597,59 +652,65 @@ if __name__ == '__main__':
     # dev.send(cmd.configure.frequency.combine(), 100)
     # dev.send(cmd.configure.period.combine(),100)
     # dev.send(cmd.configure.digital_byte.combine(), 100)
-    print(cmd.configure.combine())
+    # print(cmd.configure.combine())
+    #
+    # print("*" * 30)
+    # print(cmd.configure.current.ac.combine())
+    # print(cmd.configure.current.dc.combine())
+    # print(cmd.configure.digital_byte.combine())
+    # print(cmd.configure.frequency.combine())
+    # print(cmd.configure.fresistance.combine())
+    # print(cmd.configure.period.combine())
+    # print(cmd.configure.resistance.combine())
+    # print(cmd.configure.temperature.combine())
+    # print(cmd.configure.totalize.combine())
+    # print(cmd.configure.voltage.ac.combine())
+    # print(cmd.configure.voltage.dc.combine())
+    # # print(cmd.configure.voltage.ac.Range.combine())
+    # print(cmd.sense.voltage.ac.Range.combine())
+    # print("*" * 30)
+    # print(cmd.sense.current.ac.Bandwidth.combine())
+    # print(cmd.sense.current.ac.Range.combine())
+    # print(cmd.sense.current.ac.Range.Auto.combine())
+    # print(cmd.sense.current.ac.Resolution.combine())
+    #
+    # print("*"*30)
+    # print(cmd.sense.current.dc.Aperture.combine())
+    # print(cmd.sense.current.dc.NPLC.combine())
+    # print(cmd.sense.current.dc.Range.combine())
+    # print(cmd.sense.current.dc.Range.Auto.combine())
+    # print(cmd.sense.current.dc.Resolution.combine())
+    #
+    # print("*" * 30)
+    # print(cmd.sense.voltage.ac.Range.combine())
+    # print(cmd.sense.voltage.ac.Resolution.combine())
+    # print(cmd.sense.voltage.ac.Bandwidth.combine())
+    #
+    # print("*" * 30)
+    # print(cmd.sense.current.dc.Aperture.combine())
+    # print(cmd.sense.current.dc.NPLC.combine())
+    # print(cmd.sense.current.dc.Range.combine())
+    # print(cmd.sense.current.dc.Range.Auto.combine())
+    # print(cmd.sense.current.dc.Resolution.combine())
+    #
+    # print("*" * 30)
+    # print(cmd.sense.resistance.Aperture.combine())
+    # print(cmd.sense.resistance.NPLC.combine())
+    # print(cmd.sense.resistance.Ocompensated.combine())
+    # print(cmd.sense.resistance.Range.combine())
+    # print(cmd.sense.resistance.Range.Auto.combine())
+    # print(cmd.sense.resistance.Resolution.combine())
+    #
+    # print("*" * 30)
+    # print(cmd.sense.fresistance.Aperture.combine())
+    # print(cmd.sense.fresistance.NPLC.combine())
+    # print(cmd.sense.fresistance.Ocompensated.combine())
+    # print(cmd.sense.fresistance.Range.combine())
+    # print(cmd.sense.fresistance.Range.Auto.combine())
+    # print(cmd.sense.fresistance.Resolution.combine())
+    # # dev.close()
+    # print(cmd.read.combine())
 
-    print("*" * 30)
-    print(cmd.configure.current.ac.combine())
-    print(cmd.configure.current.dc.combine())
-    print(cmd.configure.digital_byte.combine())
-    print(cmd.configure.frequency.combine())
-    print(cmd.configure.fresistance.combine())
-    print(cmd.configure.period.combine())
-    print(cmd.configure.resistance.combine())
-    print(cmd.configure.temperature.combine())
-    print(cmd.configure.totalize.combine())
     print(cmd.configure.voltage.ac.combine())
-    print(cmd.configure.voltage.dc.combine())
-
-    print("*" * 30)
-    print(cmd.sense.current.ac.Bandwidth.combine())
-    print(cmd.sense.current.ac.Range.combine())
-    print(cmd.sense.current.ac.Range.Auto.combine())
-    print(cmd.sense.current.ac.Resolution.combine())
-
-    print("*"*30)
-    print(cmd.sense.current.dc.Aperture.combine())
-    print(cmd.sense.current.dc.NPLC.combine())
-    print(cmd.sense.current.dc.Range.combine())
-    print(cmd.sense.current.dc.Range.Auto.combine())
-    print(cmd.sense.current.dc.Resolution.combine())
-
-    print("*" * 30)
-    print(cmd.sense.voltage.ac.Range.combine())
-    print(cmd.sense.voltage.ac.Resolution.combine())
-    print(cmd.sense.voltage.ac.Bandwidth.combine())
-
-    print("*" * 30)
-    print(cmd.sense.current.dc.Aperture.combine())
-    print(cmd.sense.current.dc.NPLC.combine())
-    print(cmd.sense.current.dc.Range.combine())
-    print(cmd.sense.current.dc.Range.Auto.combine())
-    print(cmd.sense.current.dc.Resolution.combine())
-
-    print("*" * 30)
-    print(cmd.sense.resistance.Aperture.combine())
-    print(cmd.sense.resistance.NPLC.combine())
-    print(cmd.sense.resistance.Ocompensated.combine())
-    print(cmd.sense.resistance.Range.combine())
-    print(cmd.sense.resistance.Range.Auto.combine())
-    print(cmd.sense.resistance.Resolution.combine())
-
-    print("*" * 30)
-    print(cmd.sense.fresistance.Aperture.combine())
-    print(cmd.sense.fresistance.NPLC.combine())
-    print(cmd.sense.fresistance.Ocompensated.combine())
-    print(cmd.sense.fresistance.Range.combine())
-    print(cmd.sense.fresistance.Range.Auto.combine())
-    print(cmd.sense.fresistance.Resolution.combine())
-    # dev.close()
+    print(cmd.configure.voltage.ac.request())
+    print(cmd.read.request())

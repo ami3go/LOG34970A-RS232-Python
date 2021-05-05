@@ -6,6 +6,9 @@ log = logger_class.com_interface()
 cmd = logger_class.storage()
 log.init("COM11")
 txt = f"{cmd.configure.voltage.dc.ch_range(301,320)}"
+cmd.sense.voltage.ac.Range
+cmd.configure.voltage.ac.Range
+
 print(txt)
 log.send(txt)
 time.sleep(3)
@@ -20,7 +23,8 @@ txt ="INIT"
 log.send(txt)
 time.sleep(5)
 
-txt="FETC"
+txt="READ? (@301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320)"
+txt="READ"
 file_log = open("log.txt","w+")
 
 for i in range(0, 10000):

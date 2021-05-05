@@ -50,10 +50,10 @@ class LOG_34970A:
             )
             if not self.ser.isOpen():
                 self.ser.open()
-            txt = '*IDN?'
-            read_back = self.query(txt)
-            # self.ser.write(txt.encode())
-            # read_back = self.ser.readline().decode()
+            txt = '*IDN?\r\n'
+
+            read_back = self.ser.write(txt.encode())
+            read_back = self.ser.readline().decode()
             print(f"Connected to: {read_back}")
 
             # tmp = self.ser.isOpen()
