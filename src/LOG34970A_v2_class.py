@@ -12,146 +12,40 @@ def range_check(val, min, max, val_name):
         val = min
     return val
 
+def ch_list_from_range(is_req, min, max, channels_num=20):
+    channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
+    channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
+    channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
+    req_txt = ""
+    if is_req == 1:
+        req_txt = "?"
+    channels = channels_num
+    slot_id = int(min/100)
+    slot_id = range_check(slot_id,1,3,"slot ID")
+    min = range_check(min, (slot_id*100+1), (slot_id*100+channels), " channels number")
+    max = range_check(max, (slot_id*100+1), (slot_id*100+channels), " channels number")
+    txt = f"{min},"
+    l = [f"{min},"]
+    for z in range(0, (max - min)):
+        l.append(f'{min + z + 1},')
+    txt = "".join(l)
+    txt = txt[:-1]
+    txt = f"{req_txt} (@{txt})"
+    return txt
 
+def ch_list_from_list(is_req, *argv):
+    req_txt = "?" if is_req == 1 else ""
 
-# ## Number of Points to request
-# USER_REQUESTED_POINTS = 1000
-#     ## None of these scopes offer more than 8,000,000 points
-#     ## Setting this to 8000000 or more will ensure that the maximum number of available points is retrieved, though often less will come back.
-#     ## Average and High Resolution acquisition types have shallow memory depth, and thus acquiring waveforms in Normal acq. type and post processing for High Res. or repeated acqs. for Average is suggested if more points are desired.
-#     ## Asking for zero (0) points, a negative number of points, fewer than 100 points, or a non-integer number of points (100.1 -> error, but 100. or 100.0 is ok) will result in an error, specifically -222,"Data out of range"
-#
-# ## Initialization constants
-# INSTRUMENT_VISA_ADDRESS = 'USB0::0x0957::0x0A07::MY48001027::0::INSTR' # Get this from Keysight IO Libraries Connection Expert
-#     ## Note: sockets are not supported in this revision of the script (though it is possible), and PyVisa 1.8 does not support HiSlip, nor do these scopes.
-#     ## Note: USB transfers are generally fastest.
-#     ## Video: Connecting to Instruments Over LAN, USB, and GPIB in Keysight Connection Expert: https://youtu.be/sZz8bNHX5u4
+    txt = f"{argv}"
+    print(f'1****{txt}')
+    txt = txt[2:-3]
+    print(f'2****{txt}')
+    txt = txt.replace(" ", "")
+    print(f'3****{txt}')
+    txt = f'{req_txt} (@{txt})'
+    print(f'4****{txt}')
+    return txt
 
-# GLOBAL_TOUT =  10 # IO time out in milliseconds
-#
-# class LOG_34970A:
-#
-#     def __init__(self):
-#         self.ser = None
-#
-#     def init(self, com_port, baudrate_var=115200):
-#         com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]
-#         if com_port not in com_port_list:
-#             print("COM port is not found")
-#             print("Please ensure that USB is connected")
-#             print(f"Please check COM port Number. Currently it is {com_port} ")
-#             print(f'Founded COM ports:{com_port_list}')
-#             return False
-#         else:
-#             self.ser = serial.Serial(
-#                 port=com_port,
-#                 baudrate=baudrate_var,
-#                 timeout=0.1
-#             )
-#             if not self.ser.isOpen():
-#                 self.ser.open()
-#             txt = '*IDN'
-#             read_back = self.query(txt)
-#             print(f"Connected to: {read_back}")
-#
-#             # tmp = self.ser.isOpen()
-#             # print("is open:", tmp)
-#             # return_value = self.get_status()
-#             return True
-#
-#     def send(self, cmd_srt):
-#         txt = f'{cmd_srt}\r\n'
-#         self.ser.write(txt.encode())
-#
-#     def query(self, cmd_srt):
-#         txt = f'{cmd_srt}?'
-#         self.send(txt)
-#         return self.ser.readline().decode()
-#
-#     def close(self):
-#         self.ser.close()
-#         self.ser = None
-#
-#
-#     # configuring reading time
-#     # on_off = 0 - off
-#     # on_off = 1 - on
-#     # status -  check status
-#     def conf_reading_time(self, on_off, check_val=1):
-#         cmd_list = ["OFF", "ON", "Unknown"]
-#         on_off = range_check(on_off,0,1,"ON/OFF state")
-#         check_val = range_check(check_val, 0, 1, "check_back bool val")
-#         txt = f'FORM:READ:TIME {cmd_list[on_off]}'
-#         self.send(txt)
-#         if check_val == 1:
-#             txt = 'FORM:READ:TIME?'
-#             read_back = int(self.query(txt))
-#             print(f"FORM:READ:TIME {cmd_list[read_back]}")
-#             return read_back
-#
-#     def conf_sys_date(self, yy=2021, mm=4, dd=23, check_val=1):
-#         yy = range_check(yy,2021,2200,"Year")
-#         mm = range_check(mm, 1, 12, "Month")
-#         dd = range_check(dd, 1, 31, "Day")
-#         check_val = range_check(check_val, 0, 1, "check_back bool val")
-#         txt = f'SYST:DATE {yy},{str(mm).zfill(2)},{dd}\r\n'
-#         self.ser.write(txt.encode())
-#
-#         if check_val == 1:
-#             txt = f'SYST:DATE?\r\n'
-#             self.ser.write(txt.encode())
-#             read_back = self.ser.readline().decode()
-#             print(f"SYST:DATE? {read_back}")
-#             return read_back
-#
-#     def conf_sys_time(self, hh=12, mm=20, ss=23, check_val=1):
-#         hh = range_check(hh, 0, 23, "hours")
-#         mm = range_check(mm, 0, 59, "minutes")
-#         ss = range_check(ss, 0, 59, "seconds")
-#         ss = round(ss,3)
-#         check_val = range_check(check_val, 0, 1, "check_back bool val")
-#         txt = f'SYST:TIME {str(hh).zfill(2)},{str(mm).zfill(2)},{str(ss).zfill(6)}\r\n'
-#         self.ser.write(txt.encode())
-#
-#         if check_val == 1:
-#             txt = f'SYST:TIME?\r\n'
-#             self.ser.write(txt.encode())
-#             read_back = self.ser.readline().decode()
-#             print(f"SYST:TIME? {read_back}")
-#             return read_back
-#
-#     def get_sys_time_scan(self, show_val=0):
-#         show_val = range_check(show_val, 0, 1, "show bool val")
-#         txt = f'SYST:TIME:SCAN?\r\n'
-#         self.ser.write(txt.encode())
-#         read_back = self.ser.readline().decode()
-#         if show_val ==1:
-#             print(f"{read_back}")
-#         return read_back
-#
-#     def read(self):
-#         txt = f'READ?\r\n'
-#         print(f"CMD:{txt} need to be checked")
-#         self.ser.write(txt.encode())
-#         read_back = self.ser.readline().decode()
-#         print(f"SYST:TIME? {read_back}")
-#         return read_back
-#
-#     def read(self):
-#         txt = f'READ?\r\n'
-#         print(f"CMD:{txt} need to be checked")
-#         self.ser.write(txt.encode())
-#         read_back = self.ser.readline().decode()
-#         print(f"SYST:TIME? {read_back}")
-#         return read_back
-#
-#     def configure(self):
-#         txt = f'READ?\r\n'
-#         print(f"CMD:{txt} need to be checked")
-#         self.ser.write(txt.encode())
-#         read_back = self.ser.readline().decode()
-#         print(f"SYST:TIME? {read_back}")
-#         return read_back
 
 
 class com_interface():
@@ -219,7 +113,6 @@ class str_return:
     def __init__(self):
         self.cmd = None
 
-
     def str(self):
         # will put sending command here
         return self.cmd
@@ -227,46 +120,41 @@ class str_return:
     def req(self):
         return self.cmd + "?"
 
-
     def ch_list(self,is_req, *argv):
-        req_txt = ""
-        if is_req == 1:
-            req_txt = "?"
-        txt = ""
-        for arg in argv:
-            txt = f'{txt}{arg},'
-        txt = txt[:-1]
-        txt = f'{self.cmd}{req_txt} (@{txt})'
+        ch_list_txt = ch_list_from_list(is_req, argv)
+        txt = f'{self.cmd}{ch_list_txt}'
         return txt
 
     def ch_range(self,is_req, min, max, channels_num=20):
-        channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
-        channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
-        channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
-        req_txt = ""
-        if is_req == 1:
-            req_txt = "?"
-        channels = channels_num
-        slot_id = int(min/100)
-        slot_id = range_check(slot_id,1,3,"slot ID")
-        min = range_check(min, (slot_id*100+1), (slot_id*100+channels), " channels number")
-        max = range_check(max, (slot_id*100+1), (slot_id*100+channels), " channels number")
-        txt = f"{min},"
-        l = [f"{min},"]
-        for z in range(0, (max - min)):
-            l.append(f'{min + z + 1},')
-        txt = "".join(l)
-        txt = txt[:-1]
-        txt = f"{self.cmd}{req_txt} (@{txt})"
+        ch_list_txt = ch_list_from_range(is_req,min,max,channels_num)
+        txt = f"{self.cmd}{ch_list_txt}"
         return txt
 
+class str:
+    def __init__(self):
+        self.cmd = None
 
-class req_only:
+    def str(self):
+        # will put sending command here
+        return self.cmd
+
+
+class req:
     def __init__(self):
         self.cmd = None
 
     def req(self):
         return self.cmd + "?"
+
+class req_param:
+    def __init__(self):
+        self.cmd = None
+
+    def req(self, count, min = 0, max = 50000):
+        count = range_check(count, min, max, "MAX count")
+        txt = f'{self.cmd}? {count}'
+        return txt
+
 
 class ch_single:
     def __init__(self):
@@ -284,42 +172,19 @@ class ch_single:
         return txt
 
 
-
 class select_channel:
     def __init__(self, cmd):
         self.cmd = None
 
     def ch_list(self, *argv):
-        txt = ""
-        for arg in argv:
-            txt = f'{txt}{arg},'
-        txt = txt[:-1]
-        txt = f'{self.cmd} (@{txt})'
+        ch_list_txt = ch_list_from_list(0, argv)
+        txt = f'{self.cmd}{ch_list_txt}'
         return txt
 
     def ch_range(self, min, max, channels_num=20):
-        channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
-        channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
-        channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
-        channels = channels_num
-        slot_id = int(min/100)
-        slot_id = range_check(slot_id,1,3,"slot ID")
-        min = range_check(min, (slot_id*100+1), (slot_id*100+channels), " channels number")
-        max = range_check(max, (slot_id*100+1), (slot_id*100+channels), " channels number")
-        txt = f"{min},"
-        l = [f"{min},"]
-        for z in range(0, (max - min)):
-            l.append(f'{min + z + 1},')
-        txt = "".join(l)
-        txt = txt[:-1]
-        txt = f"{self.cmd} (@{txt})"
+        ch_list_txt = ch_list_from_range(0,min,max,channels_num)
+        txt = f"{self.cmd}{ch_list_txt})"
         return txt
-
-
-class make_request(select_channel):
-    def __init__(self, prefix):
-        self.prefix = prefix
-        self.cmd = self.prefix + "?"
 
 
 
@@ -355,9 +220,14 @@ class storage():
         # self.status = status()
         # self.system = system()
         # self.trigger = trigger()
-        self.read = read()
-        self.init = init()
         self.route = route()
+        self.abort = abort()
+        self.fetch = fetch()
+        self.init = init()
+        self.read = read()
+        self.r = r()
+        self.unit_temperature = unit_temperature()
+        self.input_impedance_auto =  input_impedance_auto()
 
 
 class configure(str_return):
@@ -541,23 +411,112 @@ class route:
         self.monitor = monitor(self.prefix)
 
 
-# --------------------------------------------
-#             READ
-# --------------------------------------------
+# **********  ABORt *************
+class abort(str):
+    # The following command aborts the measurement in progress.
+    def __init__(self):
+        print("INIT Abort")
+        self.prefix = "ABORt"
+        self.cmd = "ABORt"
+# **********  Fetch *************
+class fetch(req):
+    # The following command aborts the measurement in progress.
+    def __init__(self):
+        print("INIT FETCh")
+        self.prefix = "FETCh"
+        self.cmd = "FETCh"
+
+# **********  READ *************
 class read(str_return):
     def __init__(self):
         print("INIT Read")
         self.prefix = "READ"
         self.cmd = "READ"
 
-# --------------------------------------------
-#             INIT
-# --------------------------------------------
-class init(str_return):
+# **********  R? *************
+class r(req_param):
+    # This query reads and erases readings from volatile memory up to the
+    # specified <max_count>. The readings are erased from memory starting
+    # with the oldest reading first. The purpose of this command is to allow you
+    # to periodically remove readings from memory that would normally cause
+    # reading memory to overflow (for example, during a scan with an infinite
+    # scan count).
+    def __init__(self):
+        print("INIT R?")
+        self.prefix = "R"
+        self.cmd = "R"
+
+# **********  INIT *************
+class init(str):
+    # This command changes the state of the triggering system from the "idle"
+    # state to the "wait-for-trigger" state. Scanning will begin when the
+    # specified trigger conditions are satisfied following the receipt of the
+    # INITiate command. Readings are stored in the instrument's internal
+    # reading memory. Note that the INITiate command also clears the
+    # previous set of readings from memory.
+    # If a scan list is currently defined (see ROUTe:SCAN command), the
+    # INITiate command performs a scan of the specified channels.
+    # If a scan list is not currently defined, the INITiate command fails.
     def __init__(self):
         print("INIT INIT")
-        self.prefix = "INIT"
-        self.cmd = "INIT"
+        self.prefix = "INITiate"
+        self.cmd = "INITiate"
+
+# **********  UNIT:TEMPerature *************
+class unit_temperature:
+    def __init__(self):
+        print("INIT Read")
+        self.prefix = "UNIT:TEMPerature"
+        self.cmd = "UNIT:TEMPerature"
+
+    def req_ch_range(self, ch_min, ch_max):
+        ch_list_txt = ch_list_from_range(1, ch_min,ch_max,20)
+        txt = f'{self.cmd}{ch_list_txt}'
+        return txt
+
+    def req_ch_list(self, *channels):
+        ch_list_txt = ch_list_from_list(1, channels)
+        txt = f'{self.cmd}{ch_list_txt}'
+        return txt
+
+    def conf_ch_range(self, ch_min, ch_max, unit="C"):
+    # The query returns C, F, or K for each channel specified.
+    # Multiple responses are separated by commas.
+        ch_list_txt = ch_list_from_range(0, ch_min, ch_max, 20)
+        unit_list = ["C","F","K"]
+        unit = unit.upper()
+        txt = "none"
+        if unit in unit_list:
+            txt = f'{self.cmd} {unit},{ch_list_txt[1:]}'
+        else:
+           print(f'{self.cmd} incorrect unit. you entered: {unit}')
+           print(f' A "C" was used as a default ')
+        return txt
+
+class input_impedance_auto:
+    def __init__(self):
+        print("INIT INPut:IMPedance:AUTO")
+        self.prefix = "INPut:IMPedance:AUTO"
+        self.cmd = "INPut:IMPedance:AUTO"
+
+    def req_ch_range(self, ch_min, ch_max):
+        ch_list_txt = ch_list_from_range(1, ch_min, ch_max, 20)
+        txt = f'{self.cmd}{ch_list_txt}'
+        return txt
+
+    def req_ch_list(self, *channels):
+        ch_list_txt = ch_list_from_list(1, channels)
+        txt = f'{self.cmd}{ch_list_txt}'
+        return txt
+
+    def conf_ch_range(self, ch_min, ch_max, on_off=1):
+        # This command enables or disables the automatic input resistance mode
+        # for DC voltage measurements on the specified channels.
+        ch_list_txt = ch_list_from_range(0, ch_min, ch_max, 20)
+        on_off = range_check(on_off, 0, 1, "input impedance On/Off. enter 0 or 1" )
+        txt_var = "ON" if on_off == 1 else "OFF"
+        txt = f'{self.cmd} {txt_var} {ch_list_txt}'
+        return txt
 
 
 # part of ROUTE class
@@ -568,7 +527,7 @@ class scan(str_return):
         self.size = size(self.prefix)
 
 # part of ROUTE: SCAN class
-class size(req_only):
+class size(req):
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "SIZE"
         self.cmd = self.prefix
@@ -602,7 +561,7 @@ class exclusive(str_return):
         self.prefix = prefix + ":" + "EXCLusive"
         self.cmd = self.prefix
 
-class done(req_only):
+class done(req):
     # This queries the status of all relay operations on cards not involved in the
     # scan and returns a 1 when all relay operations are finished (even during
     # a scan). ONLY -> ROUTe:DONE?
@@ -610,7 +569,7 @@ class done(req_only):
         self.prefix = prefix + ":" + "DONE"
         self.cmd = self.prefix
 
-class monitor(req_only, ch_single):
+class monitor(req, ch_single):
     # This command/query selects the channel to be displayed on the front
     # panel. Only one channel can be monitored at a time.
     # ROUTe:MONitor
@@ -624,7 +583,7 @@ class monitor(req_only, ch_single):
         self.data = data(self.prefix)
         self.state = state(self.prefix)
 
-class data(req_only):
+class data(req):
     # This query reads the monitor data from the selected channel. It returns
     # the reading only; the units, time, channel, and alarm information are not
     # returned (the FORMat:READing commands do not apply to monitor
@@ -633,7 +592,7 @@ class data(req_only):
         self.prefix = prefix + ":" + "DATA"
         self.cmd = self.prefix
 
-class state(req_only):
+class state(req):
     # This query reads the monitor data from the selected channel. It returns
     # the reading only; the units, time, channel, and alarm information are not
     # returned (the FORMat:READing commands do not apply to monitor
@@ -826,7 +785,26 @@ if __name__ == '__main__':
     # dev.send(cmd.configure.period.combine(),100)
     # dev.send(cmd.configure.digital_byte.combine(), 100)
     # print(cmd.configure.combine())
-    #
+    print(cmd.abort.str())
+    print(cmd.fetch.req())
+    print(cmd.r.req(100))
+    print(cmd.init.str())
+    print(cmd.read.req())
+    print(cmd.read.ch_range(0, 110, 120))
+    print(cmd.read.ch_range(1, 110, 120))
+    print(cmd.read.ch_list(0, 302, 305, 307, 308))
+    print(cmd.read.ch_list(1, 302, 303))
+    print(cmd.read.ch_list(0, 303))
+    print(cmd.r.req(1000))
+    print(cmd.unit_temperature.conf_ch_range(110, 120, "F"))
+    print(cmd.unit_temperature.req_ch_range(110, 120))
+    print(cmd.unit_temperature.req_ch_list(110))
+    print(cmd.input_impedance_auto.conf_ch_range(110,120, 1))
+    print(cmd.input_impedance_auto.conf_ch_range(110, 120, 0))
+    print(cmd.input_impedance_auto.req_ch_range(110,120))
+    print(cmd.input_impedance_auto.req_ch_list(115,110,112,118,120))
+
+
     # print("*" * 30)
     # print(cmd.configure.current.ac.combine())
     # print(cmd.configure.current.dc.combine())
@@ -840,7 +818,7 @@ if __name__ == '__main__':
     # print(cmd.configure.voltage.ac.combine())
     # print(cmd.configure.voltage.dc.combine())
     # # print(cmd.configure.voltage.ac.Range.combine())
-    # print(cmd.sense.voltage.ac.Range.combine())
+
     # print("*" * 30)
     # print(cmd.sense.current.ac.Bandwidth.combine())
     # print(cmd.sense.current.ac.Range.combine())

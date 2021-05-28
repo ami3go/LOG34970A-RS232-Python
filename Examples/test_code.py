@@ -1,30 +1,23 @@
-# def channels(*argv):
-#         cmd = "Hellow"
-#         txt = f" (@"
-#         print(type(argv))
-#         if isinstance(argv, list):
-#                 for z in range(0, len(argv)):
-#                         txt = f'{txt}{arg},'
-#                 txt = txt[:-1]
-#                 txt = f'{cmd} {txt})'
-#         else:
-#                 for arg in argv:
-#                         txt = f'{txt}{arg},'
-#                 txt = txt[:-1]
-#                 txt = f'{cmd} {txt})'
-#         return txt
-# channels(107)
-#
-# channels(107,108,109)
-#
-# list = [107,108,109]
-#
-# channels(list)
-min = 101
-max = 110
-l = []
-for z in range(0,(max - min)):
-       l.append(f'{min+z},')
-txt = "".join(l)
-txt = txt[:-1]
-print(txt)
+import tkinter as tk
+from tkinter import filedialog
+import pandas as pd
+
+root = tk.Tk()
+
+canvas1 = tk.Canvas(root, width=300, height=300, bg='lightsteelblue2', relief='raised')
+canvas1.pack()
+
+
+def getCSV():
+    global df
+
+    import_file_path = filedialog.askopenfilename()
+    df = pd.read_csv(import_file_path)
+    print(df)
+
+
+browseButton_CSV = tk.Button(text="      Import CSV File     ", command=getCSV, bg='green', fg='white',
+                             font=('helvetica', 12, 'bold'))
+canvas1.create_window(150, 150, window=browseButton_CSV)
+
+root.mainloop()

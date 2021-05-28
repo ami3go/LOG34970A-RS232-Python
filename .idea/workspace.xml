@@ -2,8 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d1d4e796-9773-4182-b7a5-812f3cd0b65c" name="Default Changelist" comment="sync all files">
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_4_27_2021_6_16_PM_[Default_Changelist]/shelved.patch" beforeDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Command coverage" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Command_coverage.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/Logger_class_v2_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/Logger_class_v2_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/log.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/test_code.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/test_code.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -30,7 +34,7 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/Examples" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -125,8 +129,8 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.LOG34970A_v2_class" />
-        <item itemvalue="Python.Logger_class_v2_test" />
         <item itemvalue="Python.test_code" />
+        <item itemvalue="Python.Logger_class_v2_test" />
         <item itemvalue="Python.Logger_class_test" />
       </list>
     </recent_temporary>
