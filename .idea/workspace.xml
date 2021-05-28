@@ -1,12 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="d1d4e796-9773-4182-b7a5-812f3cd0b65c" name="Default Changelist" comment="sync all files">
-      <change afterPath="$PROJECT_DIR$/src/Command coverage" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Command_coverage.txt" afterDir="false" />
+    <list default="true" id="d1d4e796-9773-4182-b7a5-812f3cd0b65c" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/aws.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/DMM34411A.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/DMM34411A.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Examples/Logger_class_v2_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/Logger_class_v2_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Examples/log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/log.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/Logger_class_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/Logger_class_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Examples/test_code.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/test_code.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" afterDir="false" />
     </list>
@@ -14,13 +32,6 @@
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
-  </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Python Script" />
-      </list>
-    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -35,11 +46,6 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-  </component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\achestni\Desktop\PycharmProjects\Libraries\LOG34970A\Examples" />
-    </key>
   </component>
   <component name="RunManager" selected="Python.LOG34970A_v2_class">
     <configuration name="LOG34970A_v2_class" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
@@ -84,27 +90,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="Logger_class_v2_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="DMM34411A" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Examples" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Examples/Logger_class_v2_test.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="test_code" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="DMM34411A" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -130,7 +115,6 @@
       <list>
         <item itemvalue="Python.LOG34970A_v2_class" />
         <item itemvalue="Python.test_code" />
-        <item itemvalue="Python.Logger_class_v2_test" />
         <item itemvalue="Python.Logger_class_test" />
       </list>
     </recent_temporary>
@@ -144,116 +128,31 @@
       <option name="presentableId" value="Default" />
       <updated>1619189892365</updated>
     </task>
-    <task id="LOCAL-00001" summary="sycn with 2 objects">
-      <created>1619536772033</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1619536772033</updated>
-    </task>
-    <task id="LOCAL-00002" summary="working: &#10;separated sender/query&#10;separated command constaructor">
-      <created>1619537771205</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1619537771205</updated>
-    </task>
-    <task id="LOCAL-00003" summary="&#10;working : &#10;separated sender/query&#10;separated command constaructor  &#10;update: &#10;added __send()">
-      <created>1619538120605</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1619538120605</updated>
-    </task>
-    <task id="LOCAL-00004" summary="&#10;working : &#10;separated sender/query&#10;separated command constaructor  &#10;update: &#10;added __send()">
-      <created>1619538466109</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1619538466109</updated>
-    </task>
-    <task id="LOCAL-00005" summary="added more command and functions. &#10;added print to see if constructor works correctly">
-      <created>1619596480822</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1619596480822</updated>
-    </task>
-    <task id="LOCAL-00006" summary="added more command and functions. &#10;added print to see if constructor works correctly">
-      <created>1619597974331</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1619597974331</updated>
-    </task>
-    <task id="LOCAL-00007" summary="Fixed:&#10;.send()&#10;.query()&#10;checked for working response on instrument">
-      <created>1619607433612</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1619607433612</updated>
-    </task>
-    <task id="LOCAL-00008" summary="Running first example to grab 20 channels&#10;added methods tp class str_return&#10;&#10; *def channels(self, *argv): -  to accept channels with &quot;,&quot; separator&#10; *def ch_range(self, min, max, channels_num=20): - to generate a channels line based on min and max number.">
-      <created>1619616986909</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1619616986909</updated>
-    </task>
-    <task id="LOCAL-00009" summary="updated working example. &#10;added logging into txt file">
-      <created>1619617022602</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1619617022602</updated>
-    </task>
-    <task id="LOCAL-00010" summary="working on request class">
-      <created>1620201776405</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1620201776405</updated>
-    </task>
-    <task id="LOCAL-00011" summary="added &#10;*INIT&#10;*Read">
-      <created>1620225016772</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1620225016775</updated>
-    </task>
-    <task id="LOCAL-00012" summary="sync all files">
-      <created>1620225050277</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1620225050277</updated>
-    </task>
-    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="sycn with 2 objects" />
-    <MESSAGE value="working: &#10;separated sender/query&#10;separated command constaructor" />
-    <MESSAGE value="&#10;working : &#10;separated sender/query&#10;separated command constaructor  &#10;update: &#10;added __send()" />
-    <MESSAGE value="added more command and functions. &#10;added print to see if constructor works correctly" />
-    <MESSAGE value="Fixed:&#10;.send()&#10;.query()&#10;checked for working response on instrument" />
-    <MESSAGE value="Running first example to grab 20 channels&#10;added methods tp class str_return&#10;&#10; *def channels(self, *argv): -  to accept channels with &quot;,&quot; separator&#10; *def ch_range(self, min, max, channels_num=20): - to generate a channels line based on min and max number." />
-    <MESSAGE value="updated working example. &#10;added logging into txt file" />
-    <MESSAGE value="working on request class" />
-    <MESSAGE value="added &#10;*INIT&#10;*Read" />
-    <MESSAGE value="sync all files" />
-    <option name="LAST_COMMIT_MESSAGE" value="sync all files" />
+  <component name="WindowStateProjectService">
+    <state width="1899" height="294" key="GridCell.Tab.0.bottom" timestamp="1622222234484">
+      <screen x="1920" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1899" height="294" key="GridCell.Tab.0.bottom/0.0.1536.864/1920.0.1920.1080@1920.0.1920.1080" timestamp="1622222234484" />
+    <state width="1899" height="294" key="GridCell.Tab.0.center" timestamp="1622222234484">
+      <screen x="1920" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1899" height="294" key="GridCell.Tab.0.center/0.0.1536.864/1920.0.1920.1080@1920.0.1920.1080" timestamp="1622222234484" />
+    <state width="1899" height="294" key="GridCell.Tab.0.left" timestamp="1622222234484">
+      <screen x="1920" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1899" height="294" key="GridCell.Tab.0.left/0.0.1536.864/1920.0.1920.1080@1920.0.1920.1080" timestamp="1622222234484" />
+    <state width="1899" height="294" key="GridCell.Tab.0.right" timestamp="1622222234484">
+      <screen x="1920" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1899" height="294" key="GridCell.Tab.0.right/0.0.1536.864/1920.0.1920.1080@1920.0.1920.1080" timestamp="1622222234484" />
+    <state x="2543" y="235" width="672" height="678" key="search.everywhere.popup" timestamp="1622221613083">
+      <screen x="1920" y="0" width="1920" height="1080" />
+    </state>
+    <state x="2543" y="235" width="672" height="678" key="search.everywhere.popup/0.0.1536.864/1920.0.1920.1080@1920.0.1920.1080" timestamp="1622221613083" />
   </component>
 </project>

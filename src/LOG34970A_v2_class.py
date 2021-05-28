@@ -35,15 +35,11 @@ def ch_list_from_range(is_req, min, max, channels_num=20):
 
 def ch_list_from_list(is_req, *argv):
     req_txt = "?" if is_req == 1 else ""
-
-    txt = f"{argv}"
-    print(f'1****{txt}')
-    txt = txt[2:-3]
-    print(f'2****{txt}')
-    txt = txt.replace(" ", "")
-    print(f'3****{txt}')
+    txt = ""
+    for items in argv:
+        txt = f'{txt}{items},'
+    txt = txt[:-1]
     txt = f'{req_txt} (@{txt})'
-    print(f'4****{txt}')
     return txt
 
 
@@ -121,7 +117,7 @@ class str_return:
         return self.cmd + "?"
 
     def ch_list(self,is_req, *argv):
-        ch_list_txt = ch_list_from_list(is_req, argv)
+        ch_list_txt = ch_list_from_list(is_req, *argv)
         txt = f'{self.cmd}{ch_list_txt}'
         return txt
 
@@ -227,7 +223,7 @@ class storage():
         self.read = read()
         self.r = r()
         self.unit_temperature = unit_temperature()
-        self.input_impedance_auto =  input_impedance_auto()
+        self.input_impedance_auto = input_impedance_auto()
 
 
 class configure(str_return):
@@ -505,7 +501,7 @@ class input_impedance_auto:
         return txt
 
     def req_ch_list(self, *channels):
-        ch_list_txt = ch_list_from_list(1, channels)
+        ch_list_txt = ch_list_from_list(1, *channels)
         txt = f'{self.cmd}{ch_list_txt}'
         return txt
 
@@ -515,7 +511,7 @@ class input_impedance_auto:
         ch_list_txt = ch_list_from_range(0, ch_min, ch_max, 20)
         on_off = range_check(on_off, 0, 1, "input impedance On/Off. enter 0 or 1" )
         txt_var = "ON" if on_off == 1 else "OFF"
-        txt = f'{self.cmd} {txt_var} {ch_list_txt}'
+        txt = f'{self.cmd} {txt_var}{ch_list_txt}'
         return txt
 
 
@@ -863,7 +859,8 @@ if __name__ == '__main__':
     # print(cmd.read.combine())
     print(cmd.read.ch_range(0, 301, 305))
     print(cmd.read.ch_range(1, 301, 305))
-    print(cmd.read.ch_list(1, 301, 302))
+    txt = cmd.read.ch_list(1, 301, 302)
+    print( txt )
 
     print("*" * 30)
     print(cmd.route.scan.str())
