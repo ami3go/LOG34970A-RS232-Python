@@ -318,7 +318,7 @@ class storage():
         # self.source = source()
         # self.status = status()
         # self.system = system()
-        # self.trigger = trigger()
+        self.trigger = trigger()
         self.route = route()
         self.abort = abort()
         self.fetch = fetch()
@@ -835,6 +835,9 @@ class temperature(select_channel):
             self.conf = conf2(self.prefix + " ")
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
+        if self.prefix.find("SENSe:") != -1:
+            self.rjunction = req2(self.prefix + ":" + "RJUNction")
+            self.transducer = transduser(self.prefix)
 
 class resistance(select_channel):
     # These commands configure the channels for 2-wire (RESistance)
@@ -911,7 +914,6 @@ class ac(select_channel):
             self.Resolution = Resolution(self.prefix)
 
 
-
 class dc(select_channel):
     def __init__(self, prefix):
         self.prefix = prefix
@@ -928,7 +930,6 @@ class dc(select_channel):
             self.NPLC = NPLC(self.prefix)
 
 
-
 class Bandwidth():
     def __init__(self, prefix):
         self.prefix = prefix
@@ -938,6 +939,7 @@ class Bandwidth():
         self.conf_20 = conf2(self.prefix + " 20,")
         self.conf_200 = conf2(self.prefix + " 200,")
         self.req = req2(self.prefix)
+
 
 class Range(str_return):
     def __init__(self, prefix):
@@ -959,6 +961,7 @@ class Resolution(str_return):
         self.conf = conf2(self.prefix + " ")
         self.req = req2(self.prefix)
 
+
 class Aperture(str_return):
     def __init__(self, prefix):
         self.prefix = prefix
@@ -970,6 +973,7 @@ class Aperture(str_return):
         self.conf_100ms = conf2(self.prefix + " 100E-3,")
         self.conf_500ms = conf2(self.prefix + " 500E-3,")
         self.conf_max = conf2(self.prefix + " 1,")
+
 
 class NPLC(str_return):
     def __init__(self, prefix):
@@ -987,7 +991,8 @@ class NPLC(str_return):
         self.conf_100 = conf2(self.prefix + " 100,")
         self.conf_max = conf2(self.prefix + " 200,")
 
-class Ocompensated(str_return):
+
+class Ocompensated():
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "OCOMpensated"
@@ -997,8 +1002,162 @@ class Ocompensated(str_return):
         self.req = req2(self.prefix)
 
 
+class transduser():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "TRANsducer"
+        self.prefix = self.cmd
+        self.rtd = rtd(self.prefix)
+        self.frtd = frtd(self.prefix)
+        self.tcouple = tcouple(self.prefix)
+        self.thermistor = thermistor(self.prefix)
 
 
+class rtd():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "RTD"
+        self.prefix = self.cmd
+        self.Ocompensated = Ocompensated(self.prefix)
+        self.type = rtd_type(self.prefix)
+        self.resistance = resistance_ref(self.prefix)
+
+
+class frtd():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "FRTD"
+        self.prefix = self.cmd
+        self.Ocompensated = Ocompensated(self.prefix)
+        self.type = rtd_type(self.prefix)
+        self.resistance = resistance_ref(self.prefix)
+
+
+class rtd_type():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "TYPE"
+        self.prefix = self.cmd
+        self.conf_85 = conf2(self.prefix + " 85,")
+        self.conf_91 = conf2(self.prefix + " 91,")
+        self.req = req2(self.prefix)
+
+
+class resistance_ref():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "RESistance:REFerence"
+        self.prefix = self.cmd
+        self.conf_49 = conf2(self.prefix + " 49,")
+        self.conf_2100 = conf2(self.prefix + " 2100,")
+        self.req = req2(self.prefix)
+
+class tcouple():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "TCouple"
+        self.prefix = self.cmd
+        self.check = tcouple_check(self.prefix)
+        self.rjunction = tcouple_rjunction(self.prefix)
+        self.type = tcouple_type(self.prefix)
+
+class tcouple_check():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "CHECk"
+        self.prefix = self.cmd
+        self.conf_on = conf2(self.prefix + " ON,")
+        self.conf_off = conf2(self.prefix + " OFF,")
+        self.req = req2(self.prefix)
+
+
+class tcouple_rjunction():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "RJUNction"
+        self.prefix = self.cmd
+        self.req = req2(self.prefix)
+        self.conf_m20C = conf2(self.prefix + " -20,")
+        self.conf_80C = conf2(self.prefix + " 80,")
+        self.type = junction_type(self.prefix)
+
+
+class junction_type():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "TYPE"
+        self.prefix = self.cmd
+        self.req = req2(self.prefix)
+        self.conf_internal = conf2(self.prefix + " INTernal,")
+        self.conf_external = conf2(self.prefix + " EXTernal,")
+        self.conf_fixed = conf2(self.prefix + " FIXed,")
+
+class tcouple_type():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "TYPE"
+        self.prefix = self.cmd
+        self.req = req2(self.prefix)
+        self.conf_B = conf2(self.prefix + " B,")
+        self.conf_E = conf2(self.prefix + " E,")
+        self.conf_J = conf2(self.prefix + " J,")
+        self.conf_K = conf2(self.prefix + " K,")
+        self.conf_N = conf2(self.prefix + " N,")
+        self.conf_R = conf2(self.prefix + " R,")
+        self.conf_S = conf2(self.prefix + " S,")
+        self.conf_T = conf2(self.prefix + " T,")
+
+class thermistor():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + ":THERmistor:TYPE"
+        self.prefix = self.cmd
+        self.req = req2(self.prefix)
+        self.conf_type_2252 = conf2(self.prefix + " 2252,")
+        self.conf_type_5000 = conf2(self.prefix + " 5000,")
+        self.conf_type_10000 = conf2(self.prefix + " 10000,")
+
+class trigger():
+    def __init__(self):
+        print("INIT Trigger")
+        self.cmd = "TRIGger"
+        self.prefix = "TRIGger"
+        self.count = trig_count(self.prefix)
+        self.source = trig_source(self.prefix)
+        self.timer = trig_timer(self.prefix)
+
+class trig_count():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + ":COUNt"
+        self.prefix = self.cmd
+        self.req = req2(self.prefix)
+        self.conf_1 = conf2(self.prefix + " 1,")
+        self.conf_2 = conf2(self.prefix + " 2,")
+        self.conf_10 = conf2(self.prefix + " 10,")
+        self.conf_100 = conf2(self.prefix + " 100,")
+        self.conf_1000 = conf2(self.prefix + " 1000,")
+        self.conf_10000 = conf2(self.prefix + " 10000,")
+        self.conf_50000 = conf2(self.prefix + " 50000,")
+
+class trig_source():
+    # IMMediate=Continuous scan trigger
+    # BUS =Software trigger
+    # EXTernal =An external TTL pulse trigger
+    # ALARm = Trigger on an alarm
+    # TIMer =Internally paced timer trigger
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + ":SOURce"
+        self.prefix = self.cmd
+        self.req = req2(self.prefix)
+        self.conf_bus = conf2(self.prefix + " BUS,")
+        self.conf_immediate = conf2(self.prefix + " IMMediate,")
+        self.conf_alarm1 = conf2(self.prefix + " ALARm1,")
+        self.conf_alarm2 = conf2(self.prefix + " ALARm2,")
+        self.conf_alarm3 = conf2(self.prefix + " ALARm3,")
+        self.conf_alarm4 = conf2(self.prefix + " ALARm4,")
+        self.conf_timer = conf2(self.prefix + " TIMer,")
 
 
 if __name__ == '__main__':
@@ -1098,6 +1257,12 @@ if __name__ == '__main__':
     print(cmd.sense.zero.auto.off.ch.list(102))
     print(cmd.sense.func.req.ch.list(120))
     print(cmd.sense.func.temperature.ch.range(101, 104))
+    print(cmd.sense.temperature.rjunction.ch.range(101, 105))
+    print(cmd.sense.temperature.transducer.rtd.type.conf_85.ch.range(103, 108))
+    print(cmd.sense.temperature.transducer.frtd.type.conf_91.ch.range(103, 108))
+    print(cmd.sense.temperature.transducer.rtd.resistance.conf_49.ch.list(101))
+    print(cmd.sense.temperature.transducer.tcouple.type.conf_K.ch.list(102, 110))
+    print(cmd.sense.temperature.transducer.thermistor.conf_type_5000.ch.list(120))
     #
     # print("*" * 30)
     # print(cmd.sense.voltage.ac.Range.combine())
