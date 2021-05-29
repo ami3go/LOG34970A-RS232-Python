@@ -173,20 +173,31 @@ class select_channel:
         self.cmd = None
 
     def ch_list(self, *argv):
-        ch_list_txt = ch_list_from_list(0, argv)
+        ch_list_txt = ch_list_from_list(0, *argv)
         txt = f'{self.cmd}{ch_list_txt}'
         return txt
 
     def ch_range(self, min, max, channels_num=20):
         ch_list_txt = ch_list_from_range(0,min,max,channels_num)
-        txt = f"{self.cmd}{ch_list_txt})"
+        txt = f"{self.cmd}{ch_list_txt}"
         return txt
 
+# class select_channel_2params:
+#     def __init__(self, cmd):
+#         self.cmd = None
+#
+#     def ch_list(self, range, resolution,  *argv):
+#         ch_list_txt = ch_list_from_list(0, *argv)
+#         txt = f'{self.cmd}{ch_list_txt}'
+#         return txt
+#
+#     def ch_range(self, range, resolution, min, max, channels_num=20):
+#         ch_list_txt = ch_list_from_range(0,min,max,channels_num)
+#         txt = f"{self.cmd}{ch_list_txt}"
+#         return txt
+#     def __get_range
 
 
-class results_processor:
-    def parse_output(self, output):
-        print('RESULT')
 
 
 class storage():
@@ -226,7 +237,7 @@ class storage():
         self.input_impedance_auto = input_impedance_auto()
 
 
-class configure(str_return):
+class configure(req):
     # availanle commands for CONFigure
     # * CONFigure?
     # * CONFigure:CURRent:AC
@@ -423,11 +434,11 @@ class fetch(req):
         self.cmd = "FETCh"
 
 # **********  READ *************
-class read(str_return):
+class read(str, select_channel):
     def __init__(self):
         print("INIT Read")
-        self.prefix = "READ"
-        self.cmd = "READ"
+        self.prefix = "READ?"
+        self.cmd = "READ?"
 
 # **********  R? *************
 class r(req_param):
@@ -471,7 +482,7 @@ class unit_temperature:
         return txt
 
     def req_ch_list(self, *channels):
-        ch_list_txt = ch_list_from_list(1, channels)
+        ch_list_txt = ch_list_from_list(1, *channels)
         txt = f'{self.cmd}{ch_list_txt}'
         return txt
 
@@ -614,7 +625,7 @@ class current():
         self.ac = ac(self.prefix)
         self.dc = dc(self.prefix)
 
-class digital_byte(str_return):
+class digital_byte(select_channel):
     #This command configures the instrument to scan the specified digital
     #input channels on the multifunction module as byte data, but does not
     #initiate the scan. This command redefines the scan list.
@@ -625,7 +636,7 @@ class digital_byte(str_return):
         self.prefix = prefix + ":" + "DIG:BYTE"
         self.cmd = self.prefix
 
-class frequency(str_return):
+class frequency(select_channel):
     #These commands configure the channels for frequency or period
     #measurements, but they do not initiate the scan.
     #The CONFigure command does not place the instrument in the "wait-fortrigger"
@@ -635,7 +646,7 @@ class frequency(str_return):
         self.prefix = prefix + ":" + "FREQuency"
         self.cmd = self.prefix
 
-class period(str_return):
+class period(select_channel):
     # These commands configure the channels for frequency or period
     # measurements, but they do not initiate the scan.
     # The CONFigure command does not place the instrument in the "wait-fortrigger"
@@ -645,7 +656,7 @@ class period(str_return):
         self.prefix = prefix + ":" + "PERiod"
         self.cmd = self.prefix
 
-class temperature(str_return):
+class temperature(select_channel):
     # These commands configure the channels for temperature measurements
     # but do not initiate the scan. If you omit the optional <ch_list> parameter,
     # this command applies to the currently defined scan list.
@@ -653,7 +664,7 @@ class temperature(str_return):
         self.prefix = prefix + ":" + "TEMPerature"
         self.cmd = self.prefix
 
-class resistance(str_return):
+class resistance(select_channel):
     # These commands configure the channels for 2-wire (RESistance)
     # resistance measurements but do not initiate the scan.
     def __init__(self, prefix):
@@ -667,7 +678,7 @@ class resistance(str_return):
         self.NPLC = NPLC(self.prefix)
         self.Ocompensated = Ocompensated(self.prefix)
 
-class fresistance(str_return):
+class fresistance(select_channel):
     # These commands configure the channels for  4-wire (FRESistance) resistance
     # measurements but do not initiate the scan.
     def __init__(self, prefix):
@@ -694,8 +705,14 @@ class totalize(str_return):
         self.prefix = prefix + ":" + "TOTalize"
         self.cmd = self.prefix
 
+    # def conf_mod_read(self):
+    #
+    # def conf_mod_read_rst(self):
+    #
+    # def
 
-class ac(str_return):
+
+class ac(select_channel):
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "AC"
@@ -707,7 +724,7 @@ class ac(str_return):
 
 
 
-class dc(str_return):
+class dc(select_channel):
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "DC"
@@ -767,30 +784,22 @@ if __name__ == '__main__':
     # dev.init("COM10")
     # dev.send("COM10 send")
     cmd = storage()
-    # dev = com_interface()
-    # dev.init("COM10")
-    # cmd.init("COM10")
-    # cmd.send(152200)
-    # cmd.write("write inheritant".encode())
-    # cmd.configure.send(1555)
-    # cmd.configure.voltage.ac.send(5555)
-    # cmd.configure.voltage.ac.send()
-    # dev.send(cmd.configure.voltage.ac.combine(), 100)
-    # dev.send(cmd.measure.voltage.ac.combine(), 10)
-    # dev.send(cmd.configure.frequency.combine(), 100)
-    # dev.send(cmd.configure.period.combine(),100)
-    # dev.send(cmd.configure.digital_byte.combine(), 100)
-    # print(cmd.configure.combine())
+    print("")
+    print("TOP LEVEL")
+    print("*" * 150)
     print(cmd.abort.str())
     print(cmd.fetch.req())
     print(cmd.r.req(100))
     print(cmd.init.str())
-    print(cmd.read.req())
-    print(cmd.read.ch_range(0, 110, 120))
-    print(cmd.read.ch_range(1, 110, 120))
-    print(cmd.read.ch_list(0, 302, 305, 307, 308))
-    print(cmd.read.ch_list(1, 302, 303))
-    print(cmd.read.ch_list(0, 303))
+    print(cmd.read.str())
+    print(cmd.read.ch_range(101, 120))
+    print(cmd.read.ch_list(101,105,108))
+    # print(cmd.read.req())
+    # print(cmd.read.ch_range(0, 110, 120))
+    # print(cmd.read.ch_range(1, 110, 120))
+    # print(cmd.read.ch_list(0, 302, 305, 307, 308))
+    # print(cmd.read.ch_list(1, 302, 303))
+    # print(cmd.read.ch_list(0, 303))
     print(cmd.r.req(1000))
     print(cmd.unit_temperature.conf_ch_range(110, 120, "F"))
     print(cmd.unit_temperature.req_ch_range(110, 120))
@@ -800,20 +809,36 @@ if __name__ == '__main__':
     print(cmd.input_impedance_auto.req_ch_range(110,120))
     print(cmd.input_impedance_auto.req_ch_list(115,110,112,118,120))
 
+    print("")
+    print("Configure")
+    print("*" * 150)
+    print(cmd.configure.req())
 
-    # print("*" * 30)
-    # print(cmd.configure.current.ac.combine())
-    # print(cmd.configure.current.dc.combine())
-    # print(cmd.configure.digital_byte.combine())
-    # print(cmd.configure.frequency.combine())
-    # print(cmd.configure.fresistance.combine())
-    # print(cmd.configure.period.combine())
-    # print(cmd.configure.resistance.combine())
-    # print(cmd.configure.temperature.combine())
+    print(cmd.configure.current.ac.ch_list(101, 102))
+    print(cmd.configure.current.ac.ch_range(101, 120))
+    print(cmd.configure.current.dc.ch_list(101, 102))
+    print(cmd.configure.current.dc.ch_range(101, 120))
+
+    print(cmd.configure.voltage.ac.ch_list(101, 102))
+    print(cmd.configure.voltage.ac.ch_range(101, 120))
+    print(cmd.configure.voltage.dc.ch_list(101, 102))
+    print(cmd.configure.voltage.dc.ch_range(101, 120))
+
+    print(cmd.configure.digital_byte.ch_list(101,105,107))
+    print(cmd.configure.digital_byte.ch_range(101,107))
+
+    print(cmd.configure.frequency.ch_list(101, 105, 107))
+    print(cmd.configure.frequency.ch_range(101, 107))
+    print(cmd.configure.period.ch_list(101, 105, 107))
+    print(cmd.configure.period.ch_range(101, 107))
+
+    print(cmd.configure.resistance.ch_list(101, 105, 107))
+    print(cmd.configure.resistance.ch_range(101, 115))
+
+    print(cmd.configure.temperature.ch_list(101, 107))
+    print(cmd.configure.temperature.ch_range(101, 107))
     # print(cmd.configure.totalize.combine())
-    # print(cmd.configure.voltage.ac.combine())
-    # print(cmd.configure.voltage.dc.combine())
-    # # print(cmd.configure.voltage.ac.Range.combine())
+    # print(cmd.configure.voltage.ac.Range.combine())
 
     # print("*" * 30)
     # print(cmd.sense.current.ac.Bandwidth.combine())
@@ -855,12 +880,8 @@ if __name__ == '__main__':
     # print(cmd.sense.fresistance.Range.combine())
     # print(cmd.sense.fresistance.Range.Auto.combine())
     # print(cmd.sense.fresistance.Resolution.combine())
-    # # dev.close()
-    # print(cmd.read.combine())
-    print(cmd.read.ch_range(0, 301, 305))
-    print(cmd.read.ch_range(1, 301, 305))
-    txt = cmd.read.ch_list(1, 301, 302)
-    print( txt )
+
+
 
     print("*" * 30)
     print(cmd.route.scan.str())
