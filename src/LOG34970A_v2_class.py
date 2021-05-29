@@ -13,35 +13,35 @@ def range_check(val, min, max, val_name):
     return val
 
 
-def ch_list_from_range(is_req, min, max, add_space=1, channels_num=20 ):
-    channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
-    channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
-    channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
-    req_txt = "?" if is_req == 1 else ""
-    space_txt = " " if add_space == 1 else ""
-    channels = channels_num
-    slot_id = int(min/100)
-    slot_id = range_check(slot_id,1,3,"slot ID")
-    min = range_check(min, (slot_id*100+1), (slot_id*100+channels), " channels number")
-    max = range_check(max, (slot_id*100+1), (slot_id*100+channels), " channels number")
-    txt = f"{min},"
-    l = [f"{min},"]
-    for z in range(0, (max - min)):
-        l.append(f'{min + z + 1},')
-    txt = "".join(l)
-    txt = txt[:-1]
-    txt = f"{req_txt}{space_txt}(@{txt})"
-    return txt
+# def ch_list_from_range(is_req, min, max, add_space=1, channels_num=20 ):
+#     channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
+#     channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
+#     channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
+#     req_txt = "?" if is_req == 1 else ""
+#     space_txt = " " if add_space == 1 else ""
+#     channels = channels_num
+#     slot_id = int(min/100)
+#     slot_id = range_check(slot_id,1,3,"slot ID")
+#     min = range_check(min, (slot_id*100+1), (slot_id*100+channels), " channels number")
+#     max = range_check(max, (slot_id*100+1), (slot_id*100+channels), " channels number")
+#     txt = f"{min},"
+#     l = [f"{min},"]
+#     for z in range(0, (max - min)):
+#         l.append(f'{min + z + 1},')
+#     txt = "".join(l)
+#     txt = txt[:-1]
+#     txt = f"{req_txt}{space_txt}(@{txt})"
+#     return txt
 
 
-def ch_list_from_list(is_req, *argv):
-    req_txt = "?" if is_req == 1 else ""
-    txt = ""
-    for items in argv:
-        txt = f'{txt}{items},'
-    txt = txt[:-1]
-    txt = f'{req_txt} (@{txt})'
-    return txt
+# def ch_list_from_list(is_req, *argv):
+#     req_txt = "?" if is_req == 1 else ""
+#     txt = ""
+#     for items in argv:
+#         txt = f'{txt}{items},'
+#     txt = txt[:-1]
+#     txt = f'{req_txt} (@{txt})'
+#     return txt
 
 
 def ch_list_from_list2(*argv):
@@ -161,7 +161,7 @@ class str:
         return self.cmd
 
 
-class req:
+class req():
     def __init__(self):
         self.cmd = None
 
@@ -195,7 +195,13 @@ class select_channel2():
         ch_list_txt = ch_list_from_range2(min, max, channels_num)
         txt = f"{self.cmd}{ch_list_txt}"
         return txt
+class str2():
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
 
+    def str(self,):
+        return self.cmd
 # class select_channel:
 #     def __init__(self):
 #         self.cmd = None
@@ -221,7 +227,7 @@ class dig_param:
         self.max = None #this value to be inherited for high order class
         self.min = None #this value to be inherited for high order class
 
-    def req(self, count=0):
+    def val(self, count=0):
         count = range_check(count, self.min, self.max, "MAX count")
         txt = f'{self.cmd} {count}'
         return txt
@@ -1126,19 +1132,14 @@ class trigger():
         self.source = trig_source(self.prefix)
         self.timer = trig_timer(self.prefix)
 
-class trig_count():
+class trig_count(dig_param):
     def __init__(self, prefix):
         self.prefix = prefix
-        self.cmd = self.prefix + ":" + ":COUNt"
+        self.cmd = self.prefix + ":" + "COUNt"
         self.prefix = self.cmd
         self.req = req2(self.prefix)
-        self.conf_1 = conf2(self.prefix + " 1,")
-        self.conf_2 = conf2(self.prefix + " 2,")
-        self.conf_10 = conf2(self.prefix + " 10,")
-        self.conf_100 = conf2(self.prefix + " 100,")
-        self.conf_1000 = conf2(self.prefix + " 1000,")
-        self.conf_10000 = conf2(self.prefix + " 10000,")
-        self.conf_50000 = conf2(self.prefix + " 50000,")
+        self.min = 0
+        self.max = 500000
 
 class trig_source():
     # IMMediate=Continuous scan trigger
@@ -1148,7 +1149,7 @@ class trig_source():
     # TIMer =Internally paced timer trigger
     def __init__(self, prefix):
         self.prefix = prefix
-        self.cmd = self.prefix + ":" + ":SOURce"
+        self.cmd = self.prefix + ":" + "SOURce"
         self.prefix = self.cmd
         self.req = req2(self.prefix)
         self.conf_bus = conf2(self.prefix + " BUS,")
@@ -1160,6 +1161,15 @@ class trig_source():
         self.conf_timer = conf2(self.prefix + " TIMer,")
 
 
+class trig_timer(dig_param):
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "TIMer"
+        self.prefix = self.cmd
+        self.req = req2(self.prefix)
+        self.min = 0
+        self.max = 0.359999
+
 if __name__ == '__main__':
     # dev = LOG_34970A()
     # dev.init("COM10")
@@ -1170,13 +1180,13 @@ if __name__ == '__main__':
     print("*" * 150)
     print(cmd.abort.str())
     print(cmd.fetch.req())
-    print(cmd.r.req(100))
+    print(cmd.r.val(100))
     print(cmd.init.str())
 
     print(cmd.read.req.str())
     print(cmd.read.req.ch.range(102, 105))
 
-    print(cmd.r.req(1000))
+    print(cmd.r.val(1000))
 
     print(cmd.unit_temperature.req.str())
     print(cmd.unit_temperature.req.ch.range(102,110))
@@ -1231,7 +1241,6 @@ if __name__ == '__main__':
     print("sense")
     print("*" * 150)
 
-    print("*" * 30)
     print(cmd.sense.current.ac.Bandwidth.conf_200.ch.list(102, 105))
     print(cmd.sense.current.ac.Bandwidth.conf_3.ch.list(101))
     print(cmd.sense.current.ac.Range.req.ch.range(102, 105))
@@ -1263,6 +1272,13 @@ if __name__ == '__main__':
     print(cmd.sense.temperature.transducer.rtd.resistance.conf_49.ch.list(101))
     print(cmd.sense.temperature.transducer.tcouple.type.conf_K.ch.list(102, 110))
     print(cmd.sense.temperature.transducer.thermistor.conf_type_5000.ch.list(120))
+
+    print("")
+    print("TRIGER")
+    print("*" * 150)
+    print(cmd.trigger.timer.val(0.001))
+    print(cmd.trigger.count.val(100))
+    cmd.trigger.source.conf_immediate.
     #
     # print("*" * 30)
     # print(cmd.sense.voltage.ac.Range.combine())
@@ -1294,17 +1310,17 @@ if __name__ == '__main__':
 
 
 
-    print("*" * 30)
-    print(cmd.route.scan.str())
-    print(cmd.route.scan.size.req())
-    print(cmd.route.scan.ch_range(0, 301, 320))
-    print(cmd.route.close.exclusive.str())
-    print(cmd.route.close.exclusive.ch_range(0,110,120))
-    print(cmd.route.open.req())
-    print(cmd.route.scan.size.req())
-    print(cmd.route.done.req())
-    print(cmd.route.monitor.req())
-    print(cmd.route.monitor.ch_single(320))
-    print(cmd.route.monitor.state.mode_on())
-    print(cmd.route.monitor.state.mode_off())
-    print(cmd.route.monitor.state.req())
+    # print("*" * 30)
+    # print(cmd.route.scan.str())
+    # print(cmd.route.scan.size.req())
+    # print(cmd.route.scan.ch_range(0, 301, 320))
+    # print(cmd.route.close.exclusive.str())
+    # print(cmd.route.close.exclusive.ch_range(0,110,120))
+    # print(cmd.route.open.req())
+    # print(cmd.route.scan.size.req())
+    # print(cmd.route.done.req())
+    # print(cmd.route.monitor.req())
+    # print(cmd.route.monitor.ch_single(320))
+    # print(cmd.route.monitor.state.mode_on())
+    # print(cmd.route.monitor.state.mode_off())
+    # print(cmd.route.monitor.state.req())
