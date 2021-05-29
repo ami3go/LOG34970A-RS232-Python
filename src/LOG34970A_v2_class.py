@@ -12,13 +12,13 @@ def range_check(val, min, max, val_name):
         val = min
     return val
 
-def ch_list_from_range(is_req, min, max, channels_num=20):
+
+def ch_list_from_range(is_req, min, max, add_space=1, channels_num=20 ):
     channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
     channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
     channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
-    req_txt = ""
-    if is_req == 1:
-        req_txt = "?"
+    req_txt = "?" if is_req == 1 else ""
+    space_txt = " " if add_space == 1 else ""
     channels = channels_num
     slot_id = int(min/100)
     slot_id = range_check(slot_id,1,3,"slot ID")
@@ -30,7 +30,7 @@ def ch_list_from_range(is_req, min, max, channels_num=20):
         l.append(f'{min + z + 1},')
     txt = "".join(l)
     txt = txt[:-1]
-    txt = f"{req_txt} (@{txt})"
+    txt = f"{req_txt}{space_txt}(@{txt})"
     return txt
 
 def ch_list_from_list(is_req, *argv):
@@ -142,13 +142,41 @@ class req:
     def req(self):
         return self.cmd + "?"
 
-class req_param:
+class req2():
+    def __init__(self, prefix):
+        self.prefix = prefix + "?"
+        self.ac = ac(self.prefix)
+        self.dc = dc(self.prefix)
+
+
+class select_channel:
     def __init__(self):
         self.cmd = None
 
-    def req(self, count, min = 0, max = 50000):
-        count = range_check(count, min, max, "MAX count")
-        txt = f'{self.cmd}? {count}'
+    def ch_list(self, *argv):
+        ch_list_txt = ch_list_from_list(0, *argv)
+        txt = f'{self.cmd}{ch_list_txt}'
+        return txt
+
+    def ch_range(self, min, max, channels_num=20):
+        ch_list_txt = ch_list_from_range(0, min, max, channels_num)
+        txt = f"{self.cmd}{ch_list_txt}"
+        return txt
+
+
+
+
+
+
+class dig_param:
+    def __init__(self):
+        self.cmd = None #this value to be inherited for high order class
+        self.max = None #this value to be inherited for high order class
+        self.min = None #this value to be inherited for high order class
+
+    def req(self, count=0):
+        count = range_check(count, self.min, self.max, "MAX count")
+        txt = f'{self.cmd} {count}'
         return txt
 
 
@@ -169,8 +197,9 @@ class ch_single:
 
 
 class select_channel:
-    def __init__(self, cmd):
+    def __init__(self):
         self.cmd = None
+
 
     def ch_list(self, *argv):
         ch_list_txt = ch_list_from_list(0, *argv)
@@ -181,6 +210,29 @@ class select_channel:
         ch_list_txt = ch_list_from_range(0,min,max,channels_num)
         txt = f"{self.cmd}{ch_list_txt}"
         return txt
+
+
+
+
+
+class req2(select_channel):
+    def __init__(self):
+        super(req2,self).__init__()
+        self.prefix = self.prefix + "?"
+        self.cmd = self.prefix
+        self.req = req()
+
+
+    # def ch_list(self, is_req, *argv):
+    #     ch_list_txt = ch_list_from_list(is_req, *argv)
+    #     txt = f'{self.cmd}{ch_list_txt}'
+    #     return txt
+    #
+    # def ch_range(self, is_req, min, max, channels_num=20):
+    #     ch_list_txt = ch_list_from_range(is_req, min, max, channels_num)
+    #     txt = f"{self.cmd}{ch_list_txt}"
+    #     return txt
+
 
 # class select_channel_2params:
 #     def __init__(self, cmd):
@@ -235,6 +287,7 @@ class storage():
         self.r = r()
         self.unit_temperature = unit_temperature()
         self.input_impedance_auto = input_impedance_auto()
+
 
 
 class configure(req):
@@ -440,8 +493,9 @@ class read(str, select_channel):
         self.prefix = "READ?"
         self.cmd = "READ?"
 
+
 # **********  R? *************
-class r(req_param):
+class r(dig_param):
     # This query reads and erases readings from volatile memory up to the
     # specified <max_count>. The readings are erased from memory starting
     # with the oldest reading first. The purpose of this command is to allow you
@@ -450,8 +504,10 @@ class r(req_param):
     # scan count).
     def __init__(self):
         print("INIT R?")
-        self.prefix = "R"
-        self.cmd = "R"
+        self.prefix = "R?"
+        self.cmd = "R?"
+        self.min = 0
+        self.max = 50000
 
 # **********  INIT *************
 class init(str):
@@ -692,7 +748,7 @@ class fresistance(select_channel):
         self.NPLC = NPLC(self.prefix)
         self.Ocompensated = Ocompensated(self.prefix)
 
-class totalize(str_return):
+class totalize(req):
     # This command configures the instrument to read the specified totalizer
     # channels on the multifunction module but does not initiate the scan. To
     # read the totalizer during a scan without resetting the count, set the
@@ -704,13 +760,21 @@ class totalize(str_return):
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "TOTalize"
         self.cmd = self.prefix
-
+        self.conf_mod_read = conf_mod_read(self.prefix)
     # def conf_mod_read(self):
     #
     # def conf_mod_read_rst(self):
     #
     # def
+class conf_mod_read(select_channel):
+    def __init__(self, prefix):
+        self.prefix = prefix + " READ,"
+        self.cmd = self.prefix
 
+class conf_mod_read(select_channel):
+    def __init__(self, prefix):
+        self.prefix = prefix + " READ,"
+        self.cmd = self.prefix
 
 class ac(select_channel):
     def __init__(self, prefix):
@@ -794,12 +858,6 @@ if __name__ == '__main__':
     print(cmd.read.str())
     print(cmd.read.ch_range(101, 120))
     print(cmd.read.ch_list(101,105,108))
-    # print(cmd.read.req())
-    # print(cmd.read.ch_range(0, 110, 120))
-    # print(cmd.read.ch_range(1, 110, 120))
-    # print(cmd.read.ch_list(0, 302, 305, 307, 308))
-    # print(cmd.read.ch_list(1, 302, 303))
-    # print(cmd.read.ch_list(0, 303))
     print(cmd.r.req(1000))
     print(cmd.unit_temperature.conf_ch_range(110, 120, "F"))
     print(cmd.unit_temperature.req_ch_range(110, 120))
@@ -808,6 +866,7 @@ if __name__ == '__main__':
     print(cmd.input_impedance_auto.conf_ch_range(110, 120, 0))
     print(cmd.input_impedance_auto.req_ch_range(110,120))
     print(cmd.input_impedance_auto.req_ch_list(115,110,112,118,120))
+
 
     print("")
     print("Configure")
@@ -837,7 +896,7 @@ if __name__ == '__main__':
 
     print(cmd.configure.temperature.ch_list(101, 107))
     print(cmd.configure.temperature.ch_range(101, 107))
-    # print(cmd.configure.totalize.combine())
+    print(cmd.configure.totalize.conf_mod_read.ch_range(101,105))
     # print(cmd.configure.voltage.ac.Range.combine())
 
     # print("*" * 30)
