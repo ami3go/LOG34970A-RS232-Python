@@ -240,11 +240,6 @@ class sel_ch_with_param():
         txt = f"{self.cmd} {var},{ch_list_txt}"
         return txt
 
-# class conf_with_param(str):
-#     def __init__(self, prefix):
-#         self.prefix = prefix
-#         self.cmd = self.prefix
-#         self.ch = select_channel2(self.prefix)
 
 class dig_param:
     def __init__(self):
@@ -300,16 +295,6 @@ class select_channel:
         ch_list_txt = ch_list_from_range(0, min, max, channels_num)
         txt = f"{self.cmd}{ch_list_txt}"
         return txt
-
-    # def ch_list(self, is_req, *argv):
-    #     ch_list_txt = ch_list_from_list(is_req, *argv)
-    #     txt = f'{self.cmd}{ch_list_txt}'
-    #     return txt
-    #
-    # def ch_range(self, is_req, min, max, channels_num=20):
-    #     ch_list_txt = ch_list_from_range(is_req, min, max, channels_num)
-    #     txt = f"{self.cmd}{ch_list_txt}"
-    #     return txt
 
 
 # class select_channel_2params:
@@ -372,9 +357,9 @@ class configure(req):
     # * CONFigure:DIGital:BYTE
     # * CONFigure:FREQuency
     # * CONFigure:FRESistance
-    # *  CONFigure:PERiod
+    # * CONFigure:PERiod
     # * CONFigure:RESistance
-    # *  CONFigure:TEMPerature
+    # * CONFigure:TEMPerature
     # * CONFigure:TOTalize
     # * CONFigure:VOLTage:AC
     # * CONFigure:VOLTage:DC
