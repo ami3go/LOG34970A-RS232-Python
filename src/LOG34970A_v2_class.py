@@ -845,7 +845,7 @@ class dc(select_channel):
             self.NPLC = NPLC(self.prefix)
 
 
-class Bandwidth():
+class Bandwidth:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "BANDwidth"
@@ -868,12 +868,12 @@ class Range(str_return):
         self.conf_max = conf2(self.prefix + " MAX,")
 
 
-class Resolution(str_return):
+class Resolution():
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "RESolution"
         self.prefix = self.cmd
-        self.conf = conf2(self.prefix + " ")
+        self.conf = sel_ch_with_param(self.prefix, 0, 65535)
         self.req = req2(self.prefix)
 
 
@@ -883,6 +883,7 @@ class Aperture(str_return):
         self.cmd = self.prefix + ":" + "APERture"
         self.prefix = self.cmd
         self.req = req2(self.prefix)
+        self.conf_sec = sel_ch_with_param(self.prefix, 0.000004, 1)
         self.conf_min = conf2(self.prefix + " 400E-6,")
         self.conf_10ms = conf2(self.prefix + " 10E-3,")
         self.conf_100ms = conf2(self.prefix + " 100E-3,")
@@ -1262,13 +1263,14 @@ if __name__ == '__main__':
     print(cmd.sense.current.ac.Range.req.ch.range(102, 105))
     print(cmd.sense.current.ac.Range.auto.req.ch.range(102, 105))
     print(cmd.sense.current.ac.Range.auto.off.ch.range(102, 105))
-    print(cmd.sense.current.ac.Resolution.conf.ch.range(101, 102))
+    print(cmd.sense.current.ac.Resolution.conf.range(100,101,105))
     print(cmd.sense.current.ac.Bandwidth.req.ch.range(102, 105))
     print(cmd.sense.current.dc.NPLC.conf_10.ch.range(101, 103))
+    print(cmd.sense.current.dc.Aperture.conf_sec.range(0.5, 101, 104))
 
     print(cmd.sense.current.ac.Range.req.ch.range(102, 105))
     print(cmd.sense.current.ac.Range.auto.req.ch.range(102, 105))
-    print(cmd.sense.current.ac.Resolution.conf.ch.range(101, 102))
+    print(cmd.sense.current.ac.Resolution.conf.range(100, 101, 105))
     print(cmd.sense.current.ac.Bandwidth.req.ch.range(102, 105))
 
     print(cmd.sense.digital_byte.req_byte.ch.range(101, 105))
