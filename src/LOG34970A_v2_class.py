@@ -361,7 +361,7 @@ class storage():
         self.read = req2("READ")
         self.r = dig_param3("R?", 1, 50000)
         self.unit_temperature = unit_temperature()
-        self.input_impedance_auto = input_impedance_auto()
+        self.input_impedance_auto = req_on_off_ch_select("INPut:IMPedance:AUTO")
 
 
 class configure(req):
@@ -547,8 +547,9 @@ class route:
         print("INIT ROUTE")
         self.cmd = "ROUTe"
         self.prefix = "ROUTe"
-        # self.channel = route_channel(self.prefix)
+        self.channel = route_channel(self.prefix)
         self.close = open_close_ch(self.prefix + ":CLOSe")
+        self.close_exclusice = conf2(self.prefix + ":CLOSe" + ":EXCLusive ")
         self.done = req3(self.prefix + ":DONE")
         self.monitor = monitor(self.prefix)
         self.open = open_close_ch(self.prefix + ":OPEN")
@@ -567,14 +568,14 @@ class unit_temperature:
         self.conf_k = conf2(self.prefix + " K,")
 
 
-class input_impedance_auto:
-    def __init__(self):
-        print("INIT INPut:IMPedance:AUTO")
-        self.prefix = "INPut:IMPedance:AUTO"
-        self.cmd = "INPut:IMPedance:AUTO"
+class req_on_off_ch_select:
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
         self.req = req2(self.prefix)
-        self.conf_on = conf2(self.prefix + " ON ")
-        self.conf_off = conf2(self.prefix + " OFF ")
+        self.on = conf2(self.prefix + " ON,")
+        self.off = conf2(self.prefix + " OFF,")
+
 
 
 # part of ROUTE class
@@ -600,26 +601,6 @@ class open_close_ch():
 
 
 
-
-class exclusive(str_return):
-    # This command opens all channels on a multiplexer or switch module and
-    # then closes the specified channels. On the multiplexer modules, if any
-    # channel on the module is defined to be part of the scan list, attempting to
-    # send this command will result in an error.
-    def __init__(self, prefix):
-        self.prefix = prefix + ":" + "EXCLusive"
-        self.cmd = self.prefix
-
-
-class done(req):
-    # This queries the status of all relay operations on cards not involved in the
-    # scan and returns a 1 when all relay operations are finished (even during
-    # a scan). ONLY -> ROUTe:DONE?
-    def __init__(self, prefix):
-        self.prefix = prefix + ":" + "DONE"
-        self.cmd = self.prefix
-
-
 class monitor(req, ch_single):
     # This command/query selects the channel to be displayed on the front
     # panel. Only one channel can be monitored at a time.
@@ -631,34 +612,29 @@ class monitor(req, ch_single):
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "MONitor"
         self.cmd = self.prefix
-        self.data = data(self.prefix)
-        self.state = state(self.prefix)
+        self.conf = conf2(self.prefix + " ")
+        self.req = req3(self.prefix)
+        self.data = req3(self.prefix + ":" + "DATA")
+        self.state_req = req3(self.prefix + ":" + "STATe")
+        self.state_conf_on = str3(self.prefix + ":" + "STATe" + " ON")
+        self.state_conf_off = str3(self.prefix + ":" + "STATe" + " OFF")
 
-
-class data(req):
-    # This query reads the monitor data from the selected channel. It returns
-    # the reading only; the units, time, channel, and alarm information are not
-    # returned (the FORMat:READing commands do not apply to monitor
-    # readings).
+class route_channel():
     def __init__(self, prefix):
-        self.prefix = prefix + ":" + "DATA"
+        self.prefix = prefix + ":" + "CHANnel"
         self.cmd = self.prefix
+        self.delay = channel_delay(self.prefix + ":DELay")
+        self.fwire = req_on_off_ch_select(self.prefix + ":FWIRe")
+        self.advance_source = trig_source(self.prefix + ":ADVance")
 
-
-class state(req):
-    # This query reads the monitor data from the selected channel. It returns
-    # the reading only; the units, time, channel, and alarm information are not
-    # returned (the FORMat:READing commands do not apply to monitor
-    # readings).
+class channel_delay():
     def __init__(self, prefix):
-        self.prefix = prefix + ":" + "STATe"
+        self.prefix = prefix + ":" + "CHANnel"
         self.cmd = self.prefix
+        self.conf = sel_ch_with_param(self.prefix + ":DELay", 0, 50)
+        self.req = req2(self.prefix + ":DELay")
+        self.auto = req_on_off_ch_select(self.prefix + ":DELay:AUTO")
 
-    def mode_on(self):
-        return self.prefix + " 1"
-
-    def mode_off(self):
-        return self.prefix + " 0"
 
 
 class zero():
@@ -669,7 +645,8 @@ class zero():
         # super(zero, self).__init__()
         self.prefix = prefix + ":" + "ZERO"
         self.cmd = self.prefix
-        self.auto = auto(self.prefix)
+        self.auto = req_on_off_ch_select(self.prefix + ":" + "AUTO")
+        self.auto_once = conf2(self.prefix + ":" + "AUTO" + " ONCE,")
 
 
 class sence_func():
@@ -686,16 +663,6 @@ class sence_func():
         self.current_ac = conf2(self.prefix + ' "CURRent:AC",')
         self.frequency = conf2(self.prefix + ' "FREQuency",')
         self.period = conf2(self.prefix + ' "PERiod",')
-
-
-class auto():
-    def __init__(self, prefix):
-        self.prefix = prefix + ":" + "AUTO"
-        self.cmd = self.prefix
-        self.req = req2(self.prefix)
-        self.on = conf2(self.prefix + " ON,")
-        self.off = conf2(self.prefix + " OFF,")
-        self.once = conf2(self.prefix + " ONCE,")
 
 
 class voltage():
@@ -767,9 +734,6 @@ class frequency(select_channel):
             self.Volt_range_req = req2(self.prefix + ":VOLTage:RANGe")
             self.Volt_range_conf = conf2(self.prefix + ":VOLTage:RANGe")
             self.voltage = voltage(self.prefix)
-            # self.Volt_range_auto_on_conf = conf2(self.prefix + ":VOLTage:RANGe:AUTO ON,")
-            # self.Volt_range_auto_off_conf = conf2(self.prefix + ":VOLTage:RANGe:AUTO OFF,")
-            # self.Volt_range_auto_req = req2(self.prefix + ":VOLTage:RANGe:AUTO")
             self.Aperture = Aperture(self.prefix)
 
 
@@ -912,7 +876,7 @@ class Range(str_return):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "RANGe"
         self.prefix = self.cmd
-        self.auto = auto(self.prefix)
+        self.auto = req_on_off_ch_select(self.prefix + ":AUTO")
         self.conf = conf2(self.prefix + " ")
         self.req = req2(self.prefix)
         self.conf_min = conf2(self.prefix + " MIN,")
@@ -1133,13 +1097,15 @@ class trig_source():
         self.cmd = self.prefix + ":" + "SOURce"
         self.prefix = self.cmd
         self.req = req2(self.prefix)
-        self.conf_bus = str3(self.prefix + " BUS")
-        self.conf_immediate = str3(self.prefix + " IMMediate")
-        self.conf_alarm1 = str3(self.prefix + " ALARm1")
-        self.conf_alarm2 = str3(self.prefix + " ALARm2")
-        self.conf_alarm3 = str3(self.prefix + " ALARm3")
-        self.conf_alarm4 = str3(self.prefix + " ALARm4")
-        self.conf_timer = str3(self.prefix + " TIMer")
+        self.bus = str3(self.prefix + " BUS")
+        self.immediate = str3(self.prefix + " IMMediate")
+        self.external = str3(self.prefix + " EXTernal")
+        if self.prefix.find("TRIGger:") != -1:
+            self.alarm1 = str3(self.prefix + " ALARm1")
+            self.alarm2 = str3(self.prefix + " ALARm2")
+            self.alarm3 = str3(self.prefix + " ALARm3")
+            self.alarm4 = str3(self.prefix + " ALARm4")
+            self.timer = str3(self.prefix + " TIMer")
 
 
 class trig_timer(dig_param):
@@ -1261,8 +1227,8 @@ if __name__ == '__main__':
 
     print(cmd.input_impedance_auto.req.str())
     print(cmd.input_impedance_auto.req.ch.range(109, 112))
-    print(cmd.input_impedance_auto.conf_on.ch.range(101, 108))
-    print(cmd.input_impedance_auto.conf_off.ch.list(101, 108))
+    print(cmd.input_impedance_auto.on.ch.range(101, 108))
+    print(cmd.input_impedance_auto.off.ch.list(101, 108))
 
     print("")
     print("Configure")
@@ -1340,8 +1306,8 @@ if __name__ == '__main__':
     print("*" * 150)
     print(cmd.trigger.timer.val(0.001))
     print(cmd.trigger.count.val(100))
-    print(cmd.trigger.source.conf_alarm1.str())
-    print(cmd.trigger.source.conf_timer.str())
+    print(cmd.trigger.source.alarm1.str())
+    print(cmd.trigger.source.timer.str())
 
     print("")
     print("SOURCE")
@@ -1375,14 +1341,19 @@ if __name__ == '__main__':
     print(cmd.route.open.req.ch.range(102, 108))
     print(cmd.route.close.conf.ch.list(102))
     print(cmd.route.close.req.ch.range(102, 108))
-    # print(cmd.route.scan.ch_range(0, 301, 320))
-    # print(cmd.route.close.exclusive.str())
-    # print(cmd.route.close.exclusive.ch_range(0,110,120))
-    # print(cmd.route.open.req())
-    # print(cmd.route.scan.size.req())
-    # print(cmd.route.done.req())
-    # print(cmd.route.monitor.req())
-    # print(cmd.route.monitor.ch_single(320))
-    # print(cmd.route.monitor.state.mode_on())
-    # print(cmd.route.monitor.state.mode_off())
-    # print(cmd.route.monitor.state.req())
+    print(cmd.route.close_exclusice.ch.list(102))
+    print(cmd.route.monitor.req.req())
+    print(cmd.route.monitor.conf.ch.range(104, 108))
+    print(cmd.route.monitor.data.req())
+    print(cmd.route.monitor.state_conf_on.str())
+    print(cmd.route.done.req())
+    print(cmd.route.channel.delay.conf.list(10,101))
+    print(cmd.route.channel.delay.req.ch.range(102,106))
+    print(cmd.route.channel.delay.auto.req.ch.list(104))
+    print(cmd.route.channel.delay.auto.on.ch.list(110))
+    print(cmd.route.channel.delay.auto.off.ch.list(104))
+    print(cmd.route.channel.fwire.on.ch.list(103))
+    print(cmd.route.channel.fwire.req.ch.list(102))
+    print(cmd.route.channel.advance_source.bus.str())
+    print(cmd.route.channel.advance_source.external.str())
+
