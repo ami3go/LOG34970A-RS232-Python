@@ -153,14 +153,6 @@ class str:
         return self.cmd
 
 
-class req():
-    def __init__(self):
-        self.cmd = None
-
-    def req(self):
-        return self.cmd + "?"
-
-
 class req2(str):
     def __init__(self, prefix):
         self.prefix = prefix + "?"
@@ -191,13 +183,42 @@ class select_channel2():
         return txt
 
 
-class str2():
+class req:
+    def __init__(self):
+        self.cmd = None
+
+    def req(self):
+        return self.cmd + "?"
+
+class req3:
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+
+    def req(self):
+        return self.cmd + "?"
+
+
+
+class str3:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix
 
     def str(self, ):
         return self.cmd
+
+
+class str_and_req:
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+
+    def str(self, ):
+        return self.cmd
+
+    def req(self):
+        return self.cmd + "?"
 
 
 class sel_ch_with_param():
@@ -235,6 +256,19 @@ class dig_param:
         count = range_check(count, self.min, self.max, "MAX count")
         txt = f'{self.cmd} {count}'
         return txt
+
+class dig_param3:
+    def __init__(self, prefix, min, max):
+        self.prefix = prefix
+        self.cmd = self.prefix
+        self.max = max
+        self.min = min
+
+    def val(self, count=0):
+        count = range_check(count, self.min, self.max, "MAX count")
+        txt = f'{self.cmd} {count}'
+        return txt
+
 
 
 class ch_single:
@@ -318,7 +352,7 @@ class storage():
         # self.route = route()
         self.sense = sense()
         self.source = source()
-        # self.status = status()
+        self.status = status()
         # self.system = system()
         self.trigger = trigger()
         self.route = route()
@@ -1192,13 +1226,13 @@ class trig_source():
         self.cmd = self.prefix + ":" + "SOURce"
         self.prefix = self.cmd
         self.req = req2(self.prefix)
-        self.conf_bus = str2(self.prefix + " BUS")
-        self.conf_immediate = str2(self.prefix + " IMMediate")
-        self.conf_alarm1 = str2(self.prefix + " ALARm1")
-        self.conf_alarm2 = str2(self.prefix + " ALARm2")
-        self.conf_alarm3 = str2(self.prefix + " ALARm3")
-        self.conf_alarm4 = str2(self.prefix + " ALARm4")
-        self.conf_timer = str2(self.prefix + " TIMer")
+        self.conf_bus = str3(self.prefix + " BUS")
+        self.conf_immediate = str3(self.prefix + " IMMediate")
+        self.conf_alarm1 = str3(self.prefix + " ALARm1")
+        self.conf_alarm2 = str3(self.prefix + " ALARm2")
+        self.conf_alarm3 = str3(self.prefix + " ALARm3")
+        self.conf_alarm4 = str3(self.prefix + " ALARm4")
+        self.conf_timer = str3(self.prefix + " TIMer")
 
 
 class trig_timer(dig_param):
@@ -1247,6 +1281,51 @@ class source_voltage():
         self.max = 12
         self.req = req2(self.prefix)
         self.conf = sel_ch_with_param(self.prefix, self.min, self.max)
+
+class status():
+    # *ESE
+    # *ESE?
+    # *ESR?
+    # *SRE
+    # *STB?
+    # STATus:ALARm:CONDition?
+    # STATus:ALARm:ENABle
+    # STATus:ALARm:ENABle?
+    # STATus:ALARm[:EVENt]?
+    # STATus:OPERation:CONDition?
+    # STATus:OPERation:ENABle
+    # STATus:OPERation:ENABle?
+    # STATus:OPERation[:EVENt]?
+    # STATus:PRESet
+    # STATus:QUEStionable:CONDition?
+    # STATus:QUEStionable:ENABle
+    # STATus:QUEStionable:ENABle?
+    # STATus:QUEStionable[:EVENt]?
+    def __init__(self):
+        print("INIT Status")
+        self.cmd = "STATus"
+        self.prefix = "STATus"
+        self.ese = str_and_req("*ESE")
+        self.esr = req3("*ESR")
+        self.sre = str3("*SRE")
+        self.stb = req3("*STB")
+        self.preset = str3(self.prefix + ":" + "PRESet")
+        self.alarm = st_com(self.prefix + ":" + "ALARm" )
+        self.operation = st_com(self.prefix + ":" + "OPERation" )
+        self.questionable = st_com(self.prefix + ":" + "QUEStionable")
+
+class st_com():
+    # This command sets the output voltage level for the specified DAC
+    # channels on the 34907A Multifunction Module.
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+        self.prefix = self.cmd
+        self.condition = req3(self.prefix + ":" + "CONDition")
+        self.enable_conf = dig_param3(self.prefix + ":ENABle", 0, 65535)
+        self.enable_req = req3(self.prefix + ":ENABle")
+        self.event = req3(self.prefix + ":" + "EVENt")
+
 
 
 if __name__ == '__main__':
@@ -1361,7 +1440,7 @@ if __name__ == '__main__':
     print(cmd.trigger.source.conf_timer.str())
 
     print("")
-    print("TRIGER")
+    print("SOURCE")
     print("*" * 150)
     print(cmd.source.voltage.req.ch.list(102))
     print(cmd.source.voltage.conf.list(10, 101, 102))
@@ -1369,6 +1448,18 @@ if __name__ == '__main__':
     print(cmd.source.digital_state_req.ch.range(101, 102))
     print(cmd.source.digital_data.conf_byte.list(100, 101))
     print(cmd.source.digital_data.conf_word.range(65540, 101, 110))
+
+    print("")
+    print("STATUS")
+    print("*" * 150)
+    print(cmd.status.ese.req())
+    print(cmd.status.ese.str())
+    print(cmd.status.sre.str())
+    print(cmd.status.alarm.condition.req())
+    print(cmd.status.alarm.enable_conf.val(10))
+    print(cmd.status.alarm.enable_req.req())
+    print(cmd.status.operation.enable_conf.val(100))
+    print(cmd.status.questionable.condition.req())
     #
     # print("*" * 30)
     # print(cmd.sense.voltage.ac.Range.combine())
