@@ -349,18 +349,17 @@ class storage():
         # self.memory = memory()
         # self.mmemory = mmemory()
         # self.output = output()
-        # self.route = route()
         self.sense = sense()
         self.source = source()
         self.status = status()
         # self.system = system()
         self.trigger = trigger()
         self.route = route()
-        self.abort = abort()
-        self.fetch = fetch()
-        self.init = init()
-        self.read = read()
-        self.r = r()
+        self.abort = str3("ABORt")
+        self.fetch = req3("FETCh")
+        self.init = str3("INITiate")
+        self.read = req2("READ")
+        self.r = dig_param3("R?", 1, 50000)
         self.unit_temperature = unit_temperature()
         self.input_impedance_auto = input_impedance_auto()
 
@@ -548,77 +547,12 @@ class route:
         print("INIT ROUTE")
         self.cmd = "ROUTe"
         self.prefix = "ROUTe"
-        self.scan = scan(self.prefix)
-        self.open = open_channel(self.prefix)
+        # self.channel = route_channel(self.prefix)
         self.close = close_channel(self.prefix)
-        self.done = done(self.prefix)
+        self.done = req3(self.prefix + ":DONE")
         self.monitor = monitor(self.prefix)
-
-
-# **********  ABORt *************
-class abort(str):
-    # The following command aborts the measurement in progress.
-    def __init__(self):
-        print("INIT Abort")
-        self.prefix = "ABORt"
-        self.cmd = "ABORt"
-
-
-# **********  Fetch *************
-class fetch(req):
-    # The following command aborts the measurement in progress.
-    def __init__(self):
-        print("INIT FETCh")
-        self.prefix = "FETCh"
-        self.cmd = "FETCh"
-
-
-# **********  READ *************
-# class read(str, select_channel):
-#     def __init__(self):
-#         print("INIT Read")
-#         self.prefix = "READ?"
-#         self.cmd = "READ?"
-#         self.req = req2(self.prefix)
-
-class read():
-    def __init__(self):
-        self.prefix = "READ"
-        self.cmd = "READ"
-        self.req = req2(self.prefix)
-
-
-# **********  R? *************
-class r(dig_param):
-    # This query reads and erases readings from volatile memory up to the
-    # specified <max_count>. The readings are erased from memory starting
-    # with the oldest reading first. The purpose of this command is to allow you
-    # to periodically remove readings from memory that would normally cause
-    # reading memory to overflow (for example, during a scan with an infinite
-    # scan count).
-    def __init__(self):
-        print("INIT R?")
-        self.prefix = "R?"
-        self.cmd = "R?"
-        self.min = 0
-        self.max = 50000
-
-
-# **********  INIT *************
-class init(str):
-    # This command changes the state of the triggering system from the "idle"
-    # state to the "wait-for-trigger" state. Scanning will begin when the
-    # specified trigger conditions are satisfied following the receipt of the
-    # INITiate command. Readings are stored in the instrument's internal
-    # reading memory. Note that the INITiate command also clears the
-    # previous set of readings from memory.
-    # If a scan list is currently defined (see ROUTe:SCAN command), the
-    # INITiate command performs a scan of the specified channels.
-    # If a scan list is not currently defined, the INITiate command fails.
-    def __init__(self):
-        print("INIT INIT")
-        self.prefix = "INITiate"
-        self.cmd = "INITiate"
+        self.open = open_channel(self.prefix)
+        self.scan = scan(self.prefix)
 
 
 # **********  UNIT:TEMPerature *************
@@ -631,20 +565,6 @@ class unit_temperature:
         self.conf_f = conf2(self.prefix + " F,")
         self.conf_c = conf2(self.prefix + " C,")
         self.conf_k = conf2(self.prefix + " K,")
-
-    def conf_ch_range(self, ch_min, ch_max, unit="C"):
-        # The query returns C, F, or K for each channel specified.
-        # Multiple responses are separated by commas.
-        ch_list_txt = ch_list_from_range(0, ch_min, ch_max, 20)
-        unit_list = ["C", "F", "K"]
-        unit = unit.upper()
-        txt = "none"
-        if unit in unit_list:
-            txt = f'{self.cmd} {unit},{ch_list_txt[1:]}'
-        else:
-            print(f'{self.cmd} incorrect unit. you entered: {unit}')
-            print(f' A "C" was used as a default ')
-        return txt
 
 
 class input_impedance_auto:
@@ -1341,8 +1261,8 @@ if __name__ == '__main__':
     print(cmd.r.val(100))
     print(cmd.init.str())
 
-    print(cmd.read.req.str())
-    print(cmd.read.req.ch.range(102, 105))
+    print(cmd.read.str())
+    print(cmd.read.ch.range(102, 105))
 
     print(cmd.r.val(1000))
 
@@ -1417,9 +1337,6 @@ if __name__ == '__main__':
     print(cmd.sense.digital_byte.req_word.ch.range(101, 105))
 
     print(cmd.sense.frequency.voltage.Range.auto.off.ch.list(101))
-    # print(cmd.sense.frequency.Volt_range_auto_off_conf.ch.range(101, 102))
-    # print(cmd.sense.frequency.Volt_range_auto_on_conf.ch.range(101, 102))
-    # print(cmd.sense.frequency.Volt_range_auto_req.ch.range(101, 102))
 
     print(cmd.sense.zero.auto.off.ch.list(102))
     print(cmd.sense.func.req.ch.list(120))
