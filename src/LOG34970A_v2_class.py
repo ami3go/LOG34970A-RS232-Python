@@ -1,7 +1,8 @@
-#import pyvisa # PyVisa info @ http://PyVisa.readthedocs.io/en/stable/
+# import pyvisa # PyVisa info @ http://PyVisa.readthedocs.io/en/stable/
 import serial.tools.list_ports
 import serial
 import time
+
 
 def range_check(val, min, max, val_name):
     if val > max:
@@ -57,10 +58,10 @@ def ch_list_from_range2(min, max, channels_num=20):
     channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
     channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
     channels = channels_num
-    slot_id = int(min/100)
-    slot_id = range_check(slot_id,1,3,"slot ID")
-    min = range_check(min, (slot_id*100+1), (slot_id*100+channels), " channels number")
-    max = range_check(max, (slot_id*100+1), (slot_id*100+channels), " channels number")
+    slot_id = int(min / 100)
+    slot_id = range_check(slot_id, 1, 3, "slot ID")
+    min = range_check(min, (slot_id * 100 + 1), (slot_id * 100 + channels), " channels number")
+    max = range_check(max, (slot_id * 100 + 1), (slot_id * 100 + channels), " channels number")
     txt = f"{min},"
     l = [f"{min},"]
     for z in range(0, (max - min)):
@@ -78,7 +79,6 @@ class com_interface():
         print("communicator init")
         self.cmd = None
         self.ser = None
-
 
     def init(self, com_port, baudrate_var=115200):
         com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]
@@ -106,16 +106,8 @@ class com_interface():
     def send(self, txt):
         # will put sending command here
         txt = f'{txt}\r\n'
-        #print(f'Sending: {txt}')
+        # print(f'Sending: {txt}')
         self.ser.write(txt.encode())
-    # an old variant of query
-    # def query(self, cmd_srt):
-    #     txt = f'{cmd_srt}?\r\n'
-    #     self.ser.reset_input_buffer()
-    #     self.ser.write(txt.encode())
-    #     #print(f'Query: {txt}')
-    #     return_val = self.ser.readline().decode()
-    #     return return_val
 
     def query(self, cmd_srt):
         txt = f'{cmd_srt}\r\n'
@@ -124,7 +116,6 @@ class com_interface():
         # print(f'Query: {txt}')
         return_val = self.ser.readline().decode()
         return return_val
-
 
     def close(self):
         self.ser.close()
@@ -142,15 +133,16 @@ class str_return:
     def req(self):
         return self.cmd + "?"
 
-    def ch_list(self,is_req, *argv):
+    def ch_list(self, is_req, *argv):
         ch_list_txt = ch_list_from_list(is_req, *argv)
         txt = f'{self.cmd}{ch_list_txt}'
         return txt
 
-    def ch_range(self,is_req, min, max, channels_num=20):
-        ch_list_txt = ch_list_from_range(is_req,min,max,channels_num)
+    def ch_range(self, is_req, min, max, channels_num=20):
+        ch_list_txt = ch_list_from_range(is_req, min, max, channels_num)
         txt = f"{self.cmd}{ch_list_txt}"
         return txt
+
 
 class str:
     def __init__(self):
@@ -168,11 +160,13 @@ class req():
     def req(self):
         return self.cmd + "?"
 
+
 class req2(str):
     def __init__(self, prefix):
         self.prefix = prefix + "?"
         self.cmd = self.prefix
-        self.ch = select_channel2(self.prefix+" ")
+        self.ch = select_channel2(self.prefix + " ")
+
 
 class conf2(str):
     def __init__(self, prefix):
@@ -195,37 +189,47 @@ class select_channel2():
         ch_list_txt = ch_list_from_range2(min, max, channels_num)
         txt = f"{self.cmd}{ch_list_txt}"
         return txt
+
+
 class str2():
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix
 
-    def str(self,):
+    def str(self, ):
         return self.cmd
-# class select_channel:
-#     def __init__(self):
-#         self.cmd = None
-#
-#     def ch_list(self, *argv):
-#         ch_list_txt = ch_list_from_list(0, *argv)
-#         txt = f'{self.cmd}{ch_list_txt}'
-#         return txt
-#
-#     def ch_range(self, min, max, channels_num=20):
-#         ch_list_txt = ch_list_from_range(0, min, max, channels_num)
-#         txt = f"{self.cmd}{ch_list_txt}"
-#         return txt
 
 
+class sel_ch_with_param():
+    def __init__(self, prefix, min, max):
+        self.prefix = prefix
+        self.cmd = self.prefix
+        self.max = max
+        self.min = min
 
+    def list(self,var, *argv):
+        var = range_check(var, self.min, self.max, self.cmd)
+        ch_list_txt = ch_list_from_list2(*argv)
+        txt = f'{self.cmd} {var},{ch_list_txt}'
+        return txt
 
+    def range(self, var, ch_min, ch_max, ch_num=20):
+        var = range_check(var, self.min, self.max, self.cmd)
+        ch_list_txt = ch_list_from_range2(ch_min, ch_max, ch_num)
+        txt = f"{self.cmd} {var},{ch_list_txt}"
+        return txt
 
+# class conf_with_param(str):
+#     def __init__(self, prefix):
+#         self.prefix = prefix
+#         self.cmd = self.prefix
+#         self.ch = select_channel2(self.prefix)
 
 class dig_param:
     def __init__(self):
-        self.cmd = None #this value to be inherited for high order class
-        self.max = None #this value to be inherited for high order class
-        self.min = None #this value to be inherited for high order class
+        self.cmd = None  # this value to be inherited for high order class
+        self.max = None  # this value to be inherited for high order class
+        self.min = None  # this value to be inherited for high order class
 
     def val(self, count=0):
         count = range_check(count, self.min, self.max, "MAX count")
@@ -253,21 +257,15 @@ class select_channel:
     def __init__(self):
         self.cmd = None
 
-
     def ch_list(self, *argv):
         ch_list_txt = ch_list_from_list(0, *argv)
         txt = f'{self.cmd}{ch_list_txt}'
         return txt
 
     def ch_range(self, min, max, channels_num=20):
-        ch_list_txt = ch_list_from_range(0,min,max,channels_num)
+        ch_list_txt = ch_list_from_range(0, min, max, channels_num)
         txt = f"{self.cmd}{ch_list_txt}"
         return txt
-
-
-
-
-
 
     # def ch_list(self, is_req, *argv):
     #     ch_list_txt = ch_list_from_list(is_req, *argv)
@@ -296,8 +294,6 @@ class select_channel:
 #     def __get_range
 
 
-
-
 class storage():
     def __init__(self):
         self.cmd = None
@@ -321,7 +317,7 @@ class storage():
         # self.output = output()
         # self.route = route()
         self.sense = sense()
-        # self.source = source()
+        self.source = source()
         # self.status = status()
         # self.system = system()
         self.trigger = trigger()
@@ -333,7 +329,6 @@ class storage():
         self.r = r()
         self.unit_temperature = unit_temperature()
         self.input_impedance_auto = input_impedance_auto()
-
 
 
 class configure(req):
@@ -365,6 +360,7 @@ class configure(req):
         self.fresistance = fresistance(self.prefix)
         self.totalize = totalize(self.prefix)
 
+
 class measure:
     # command list :
     # MEASure:CURRent:AC?
@@ -392,6 +388,7 @@ class measure:
         self.resistance = resistance(self.prefix)
         self.fresistance = fresistance(self.prefix)
         self.totalize = totalize(self.prefix)
+
 
 class sense:
     # AC Current
@@ -531,6 +528,8 @@ class abort(str):
         print("INIT Abort")
         self.prefix = "ABORt"
         self.cmd = "ABORt"
+
+
 # **********  Fetch *************
 class fetch(req):
     # The following command aborts the measurement in progress.
@@ -538,6 +537,7 @@ class fetch(req):
         print("INIT FETCh")
         self.prefix = "FETCh"
         self.cmd = "FETCh"
+
 
 # **********  READ *************
 # class read(str, select_channel):
@@ -569,6 +569,7 @@ class r(dig_param):
         self.min = 0
         self.max = 50000
 
+
 # **********  INIT *************
 class init(str):
     # This command changes the state of the triggering system from the "idle"
@@ -585,6 +586,7 @@ class init(str):
         self.prefix = "INITiate"
         self.cmd = "INITiate"
 
+
 # **********  UNIT:TEMPerature *************
 class unit_temperature:
     def __init__(self):
@@ -596,20 +598,20 @@ class unit_temperature:
         self.conf_c = conf2(self.prefix + " C,")
         self.conf_k = conf2(self.prefix + " K,")
 
-
     def conf_ch_range(self, ch_min, ch_max, unit="C"):
-    # The query returns C, F, or K for each channel specified.
-    # Multiple responses are separated by commas.
+        # The query returns C, F, or K for each channel specified.
+        # Multiple responses are separated by commas.
         ch_list_txt = ch_list_from_range(0, ch_min, ch_max, 20)
-        unit_list = ["C","F","K"]
+        unit_list = ["C", "F", "K"]
         unit = unit.upper()
         txt = "none"
         if unit in unit_list:
             txt = f'{self.cmd} {unit},{ch_list_txt[1:]}'
         else:
-           print(f'{self.cmd} incorrect unit. you entered: {unit}')
-           print(f' A "C" was used as a default ')
+            print(f'{self.cmd} incorrect unit. you entered: {unit}')
+            print(f' A "C" was used as a default ')
         return txt
+
 
 class input_impedance_auto:
     def __init__(self):
@@ -628,11 +630,13 @@ class scan(str_return):
         self.cmd = self.prefix
         self.size = size(self.prefix)
 
+
 # part of ROUTE: SCAN class
 class size(req):
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "SIZE"
         self.cmd = self.prefix
+
 
 # part of ROUTE class
 class open_channel(str_return):
@@ -642,6 +646,7 @@ class open_channel(str_return):
         self.prefix = prefix + ":" + "OPEN"
         self.cmd = self.prefix
         self.size = size(self.prefix)
+
 
 # part of ROUTE class
 class close_channel(str_return):
@@ -654,6 +659,7 @@ class close_channel(str_return):
         self.cmd = self.prefix
         self.exclusive = exclusive(self.prefix)
 
+
 class exclusive(str_return):
     # This command opens all channels on a multiplexer or switch module and
     # then closes the specified channels. On the multiplexer modules, if any
@@ -663,6 +669,7 @@ class exclusive(str_return):
         self.prefix = prefix + ":" + "EXCLusive"
         self.cmd = self.prefix
 
+
 class done(req):
     # This queries the status of all relay operations on cards not involved in the
     # scan and returns a 1 when all relay operations are finished (even during
@@ -670,7 +677,6 @@ class done(req):
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "DONE"
         self.cmd = self.prefix
-
 
 
 class monitor(req, ch_single):
@@ -687,6 +693,7 @@ class monitor(req, ch_single):
         self.data = data(self.prefix)
         self.state = state(self.prefix)
 
+
 class data(req):
     # This query reads the monitor data from the selected channel. It returns
     # the reading only; the units, time, channel, and alarm information are not
@@ -696,6 +703,7 @@ class data(req):
         self.prefix = prefix + ":" + "DATA"
         self.cmd = self.prefix
 
+
 class state(req):
     # This query reads the monitor data from the selected channel. It returns
     # the reading only; the units, time, channel, and alarm information are not
@@ -704,18 +712,20 @@ class state(req):
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "STATe"
         self.cmd = self.prefix
+
     def mode_on(self):
         return self.prefix + " 1"
 
     def mode_off(self):
         return self.prefix + " 0"
 
+
 class zero():
     # This queries the status of all relay operations on cards not involved in the
     # scan and returns a 1 when all relay operations are finished (even during
     # a scan). ONLY -> ROUTe:DONE?
     def __init__(self, prefix):
-        #super(zero, self).__init__()
+        # super(zero, self).__init__()
         self.prefix = prefix + ":" + "ZERO"
         self.cmd = self.prefix
         self.auto = auto(self.prefix)
@@ -736,6 +746,7 @@ class sence_func():
         self.frequency = conf2(self.prefix + ' "FREQuency",')
         self.period = conf2(self.prefix + ' "PERiod",')
 
+
 class auto():
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "AUTO"
@@ -744,7 +755,6 @@ class auto():
         self.on = conf2(self.prefix + " ON,")
         self.off = conf2(self.prefix + " OFF,")
         self.once = conf2(self.prefix + " ONCE,")
-
 
 
 class voltage():
@@ -762,12 +772,13 @@ class current():
         self.ac = ac(self.prefix)
         self.dc = dc(self.prefix)
 
+
 class digital_byte():
-    #This command configures the instrument to scan the specified digital
-    #input channels on the multifunction module as byte data, but does not
-    #initiate the scan. This command redefines the scan list.
-    #The digital input channels are numbered "s01" (LSB) and "s02"
-    #(MSB), where s is the first digit of the slot number.
+    # This command configures the instrument to scan the specified digital
+    # input channels on the multifunction module as byte data, but does not
+    # initiate the scan. This command redefines the scan list.
+    # The digital input channels are numbered "s01" (LSB) and "s02"
+    # (MSB), where s is the first digit of the slot number.
     # example: CONF:DIG:BYTE (@101:102)
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "DIG:BYTE"
@@ -777,25 +788,31 @@ class digital_byte():
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
 
+
 class digital_data():
-    #This command configures the instrument to scan the specified digital
-    #input channels on the multifunction module as byte data, but does not
-    #initiate the scan. This command redefines the scan list.
-    #The digital input channels are numbered "s01" (LSB) and "s02"
-    #(MSB), where s is the first digit of the slot number.
+    # This command configures the instrument to scan the specified digital
+    # input channels on the multifunction module as byte data, but does not
+    # initiate the scan. This command redefines the scan list.
+    # The digital input channels are numbered "s01" (LSB) and "s02"
+    # (MSB), where s is the first digit of the slot number.
     # example: CONF:DIG:BYTE (@101:102)
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "DIGital:DATA:"
         self.cmd = self.prefix
-        self.req_byte = req2(self.prefix + "BYTE" )
+        self.req_byte = req2(self.prefix + "BYTE")
         self.req_word = req2(self.prefix + "WORD")
+        if self.prefix.find("SOURce:") != -1:
+            self.conf_byte = sel_ch_with_param(self.prefix + "BYTE", 0, 255)
+            self.conf_word = sel_ch_with_param(self.prefix + "WORD", 0, 65535)
+
+
 
 class frequency(select_channel):
-    #These commands configure the channels for frequency or period
-    #measurements, but they do not initiate the scan.
-    #The CONFigure command does not place the instrument in the "wait-fortrigger"
-    #state. Use the INITiate or READ? command in conjunction with
-    #CONFigure to place the instrument in the "wait-for-trigger" state.
+    # These commands configure the channels for frequency or period
+    # measurements, but they do not initiate the scan.
+    # The CONFigure command does not place the instrument in the "wait-fortrigger"
+    # state. Use the INITiate or READ? command in conjunction with
+    # CONFigure to place the instrument in the "wait-for-trigger" state.
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "FREQuency"
         self.cmd = self.prefix
@@ -815,7 +832,6 @@ class frequency(select_channel):
             self.Aperture = Aperture(self.prefix)
 
 
-
 class period(select_channel):
     # These commands configure the channels for frequency or period
     # measurements, but they do not initiate the scan.
@@ -829,6 +845,7 @@ class period(select_channel):
             self.conf = conf2(self.prefix + " ")
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
+
 
 class temperature(select_channel):
     # These commands configure the channels for temperature measurements
@@ -844,6 +861,7 @@ class temperature(select_channel):
         if self.prefix.find("SENSe:") != -1:
             self.rjunction = req2(self.prefix + ":" + "RJUNction")
             self.transducer = transduser(self.prefix)
+
 
 class resistance(select_channel):
     # These commands configure the channels for 2-wire (RESistance)
@@ -864,6 +882,7 @@ class resistance(select_channel):
             self.NPLC = NPLC(self.prefix)
             self.Ocompensated = Ocompensated(self.prefix)
 
+
 class fresistance(select_channel):
     # These commands configure the channels for  4-wire (FRESistance) resistance
     # measurements but do not initiate the scan.
@@ -883,6 +902,7 @@ class fresistance(select_channel):
             self.NPLC = NPLC(self.prefix)
             self.Ocompensated = Ocompensated(self.prefix)
 
+
 class totalize():
     # This command configures the instrument to read the specified totalizer
     # channels on the multifunction module but does not initiate the scan. To
@@ -898,11 +918,10 @@ class totalize():
         if self.prefix.find("CONFigure:") != -1:
             self.conf_read = conf2(self.prefix + " READ,")
             self.conf_rres = conf2(self.prefix + " RRES,")
-        #probably it will be better to use conf2 class
+        # probably it will be better to use conf2 class
         if self.prefix.find("MEASure:") != -1:
             self.req_read = conf2(self.prefix + "?" + " READ,")
             self.req_rres = conf2(self.prefix + "?" + " RRES,")
-
 
 
 class ac(select_channel):
@@ -910,9 +929,9 @@ class ac(select_channel):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "AC"
         self.prefix = self.cmd
-        if self.prefix.find("CONFigure:")!= -1:
-            self.conf = conf2(self.prefix+" ")
-        if self.prefix.find("MEASure:")!= -1:
+        if self.prefix.find("CONFigure:") != -1:
+            self.conf = conf2(self.prefix + " ")
+        if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
         if self.prefix.find("SENSe:") != -1:
             self.Bandwidth = Bandwidth(self.prefix)
@@ -1058,6 +1077,7 @@ class resistance_ref():
         self.conf_2100 = conf2(self.prefix + " 2100,")
         self.req = req2(self.prefix)
 
+
 class tcouple():
     def __init__(self, prefix):
         self.prefix = prefix
@@ -1066,6 +1086,7 @@ class tcouple():
         self.check = tcouple_check(self.prefix)
         self.rjunction = tcouple_rjunction(self.prefix)
         self.type = tcouple_type(self.prefix)
+
 
 class tcouple_check():
     def __init__(self, prefix):
@@ -1098,6 +1119,7 @@ class junction_type():
         self.conf_external = conf2(self.prefix + " EXTernal,")
         self.conf_fixed = conf2(self.prefix + " FIXed,")
 
+
 class tcouple_type():
     def __init__(self, prefix):
         self.prefix = prefix
@@ -1113,6 +1135,7 @@ class tcouple_type():
         self.conf_S = conf2(self.prefix + " S,")
         self.conf_T = conf2(self.prefix + " T,")
 
+
 class thermistor():
     def __init__(self, prefix):
         self.prefix = prefix
@@ -1123,7 +1146,14 @@ class thermistor():
         self.conf_type_5000 = conf2(self.prefix + " 5000,")
         self.conf_type_10000 = conf2(self.prefix + " 10000,")
 
+
 class trigger():
+    # TRIGger:COUNt
+    # TRIGger:COUNt?
+    # TRIGger:SOURce
+    # TRIGger:SOURce?
+    # TRIGger:TIMer
+    # TRIGger:TIMer?
     def __init__(self):
         print("INIT Trigger")
         self.cmd = "TRIGger"
@@ -1132,7 +1162,11 @@ class trigger():
         self.source = trig_source(self.prefix)
         self.timer = trig_timer(self.prefix)
 
+
 class trig_count(dig_param):
+    # This command specifies the number of times to sweep through the scan
+    # list. A sweep is one pass through the scan list. The scan stops when the
+    # number of specified sweeps has occurred.
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "COUNt"
@@ -1141,7 +1175,13 @@ class trig_count(dig_param):
         self.min = 0
         self.max = 500000
 
+
 class trig_source():
+    # Select the trigger source to control the onset of each sweep through the
+    # scan list (a sweep is one pass through the scan list). The instrument will
+    # accept a software (bus) command, an immediate (continuous) scan
+    # trigger, an external TTL trigger pulse, an alarm-initiated action, or an
+    # internally paced timer.
     # IMMediate=Continuous scan trigger
     # BUS =Software trigger
     # EXTernal =An external TTL pulse trigger
@@ -1152,16 +1192,21 @@ class trig_source():
         self.cmd = self.prefix + ":" + "SOURce"
         self.prefix = self.cmd
         self.req = req2(self.prefix)
-        self.conf_bus = conf2(self.prefix + " BUS,")
-        self.conf_immediate = conf2(self.prefix + " IMMediate,")
-        self.conf_alarm1 = conf2(self.prefix + " ALARm1,")
-        self.conf_alarm2 = conf2(self.prefix + " ALARm2,")
-        self.conf_alarm3 = conf2(self.prefix + " ALARm3,")
-        self.conf_alarm4 = conf2(self.prefix + " ALARm4,")
-        self.conf_timer = conf2(self.prefix + " TIMer,")
+        self.conf_bus = str2(self.prefix + " BUS")
+        self.conf_immediate = str2(self.prefix + " IMMediate")
+        self.conf_alarm1 = str2(self.prefix + " ALARm1")
+        self.conf_alarm2 = str2(self.prefix + " ALARm2")
+        self.conf_alarm3 = str2(self.prefix + " ALARm3")
+        self.conf_alarm4 = str2(self.prefix + " ALARm4")
+        self.conf_timer = str2(self.prefix + " TIMer")
 
 
 class trig_timer(dig_param):
+    # This command sets the trigger-to-trigger interval (in seconds) for
+    # measurements on the channels in the present scan list. This command
+    # defines the time from the start of one trigger to the start of the next
+    # trigger, up to the specified trigger count (see TRIGger:COUNt
+    # command).
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "TIMer"
@@ -1169,6 +1214,40 @@ class trig_timer(dig_param):
         self.req = req2(self.prefix)
         self.min = 0
         self.max = 0.359999
+
+class source():
+    # SOURce:DIGital:DATA[:{BYTE|WORD}]
+    # SOURce:DIGital:DATA[:{BYTE|WORD}]?
+    # This command outputs a digital pattern as an 8-bit byte or 16-bit word to
+    # the specified digital output channels.
+    #
+    # SOURce:DIGital:STATe?
+    # This command returns the status (input or output) of the specified digital
+    # channels.
+    #
+    # SOURce:VOLTage
+    # SOURce:VOLTage?
+    def __init__(self):
+        print("INIT SOURce")
+        self.cmd = "SOURce"
+        self.prefix = "SOURce"
+        self.digital_data = digital_data(self.prefix)
+        self.digital_state_req = req2(self.prefix + ":DIGital:STATe")
+        self.voltage = source_voltage(self.prefix)
+
+
+class source_voltage():
+    # This command sets the output voltage level for the specified DAC
+    # channels on the 34907A Multifunction Module.
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix + ":" + "VOLTage"
+        self.prefix = self.cmd
+        self.min = -12
+        self.max = 12
+        self.req = req2(self.prefix)
+        self.conf = sel_ch_with_param(self.prefix, self.min, self.max)
+
 
 if __name__ == '__main__':
     # dev = LOG_34970A()
@@ -1189,7 +1268,7 @@ if __name__ == '__main__':
     print(cmd.r.val(1000))
 
     print(cmd.unit_temperature.req.str())
-    print(cmd.unit_temperature.req.ch.range(102,110))
+    print(cmd.unit_temperature.req.ch.range(102, 110))
     print(cmd.unit_temperature.conf_c.ch.range(110, 115))
     print(cmd.unit_temperature.conf_f.ch.range(110, 115))
     print(cmd.unit_temperature.conf_k.ch.range(110, 115))
@@ -1226,7 +1305,7 @@ if __name__ == '__main__':
     print("")
     print("MEASURE")
     print("*" * 150)
-    print(cmd.measure.voltage.ac.req.ch.range(109,115))
+    print(cmd.measure.voltage.ac.req.ch.range(109, 115))
     print(cmd.measure.current.dc.req.ch.range(109, 115))
     print(cmd.measure.digital_byte.req.ch.range(101, 120))
     print(cmd.measure.frequency.req.ch.range(101, 120))
@@ -1278,7 +1357,18 @@ if __name__ == '__main__':
     print("*" * 150)
     print(cmd.trigger.timer.val(0.001))
     print(cmd.trigger.count.val(100))
-    cmd.trigger.source.conf_immediate.
+    print(cmd.trigger.source.conf_alarm1.str())
+    print(cmd.trigger.source.conf_timer.str())
+
+    print("")
+    print("TRIGER")
+    print("*" * 150)
+    print(cmd.source.voltage.req.ch.list(102))
+    print(cmd.source.voltage.conf.list(10, 101, 102))
+    print(cmd.source.voltage.conf.range(8.000, 101, 115))
+    print(cmd.source.digital_state_req.ch.range(101, 102))
+    print(cmd.source.digital_data.conf_byte.list(100, 101))
+    print(cmd.source.digital_data.conf_word.range(65540, 101, 110))
     #
     # print("*" * 30)
     # print(cmd.sense.voltage.ac.Range.combine())
@@ -1307,8 +1397,6 @@ if __name__ == '__main__':
     # print(cmd.sense.fresistance.Range.combine())
     # print(cmd.sense.fresistance.Range.Auto.combine())
     # print(cmd.sense.fresistance.Resolution.combine())
-
-
 
     # print("*" * 30)
     # print(cmd.route.scan.str())
