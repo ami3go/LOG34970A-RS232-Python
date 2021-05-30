@@ -6,7 +6,7 @@ import time
 
 def range_check(val, min, max, val_name):
     if val > max:
-        print(f"Wrong {val_name}: {val}. Max output should be less then {max} V")
+        print(f"Wrong {val_name}: {val}. Max value should be less then {max}")
         val = max
     if val < min:
         print(f"Wrong {val_name}: {val}. Should be >= {min}")
@@ -548,10 +548,10 @@ class route:
         self.cmd = "ROUTe"
         self.prefix = "ROUTe"
         # self.channel = route_channel(self.prefix)
-        self.close = close_channel(self.prefix)
+        self.close = open_close_ch(self.prefix + ":CLOSe")
         self.done = req3(self.prefix + ":DONE")
         self.monitor = monitor(self.prefix)
-        self.open = open_channel(self.prefix)
+        self.open = open_close_ch(self.prefix + ":OPEN")
         self.scan = scan(self.prefix)
 
 
@@ -578,40 +578,27 @@ class input_impedance_auto:
 
 
 # part of ROUTE class
-class scan(str_return):
+class scan():
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "SCAN"
         self.cmd = self.prefix
-        self.size = size(self.prefix)
+        self.conf = conf2(self.prefix + " ")
+        self.req = req3(self.prefix)
+        self.size = req3(self.prefix + ":" + "SIZE")
 
-
-# part of ROUTE: SCAN class
-class size(req):
-    def __init__(self, prefix):
-        self.prefix = prefix + ":" + "SIZE"
-        self.cmd = self.prefix
 
 
 # part of ROUTE class
-class open_channel(str_return):
+class open_close_ch():
     # This command opens the specified channels on a multiplexer or switch
     # module.
     def __init__(self, prefix):
-        self.prefix = prefix + ":" + "OPEN"
+        self.prefix = prefix
         self.cmd = self.prefix
-        self.size = size(self.prefix)
+        self.conf = conf2(self.prefix + " ")
+        self.req = req2(self.prefix)
 
 
-# part of ROUTE class
-class close_channel(str_return):
-    # This command closes the specified channels on a multiplexer or switch
-    # module. On the multiplexer modules, if any channel on the module is
-    # defined to be part of the scan list, attempting to send this command will
-    # result in an error.
-    def __init__(self, prefix):
-        self.prefix = prefix + ":" + "CLOSe"
-        self.cmd = self.prefix
-        self.exclusive = exclusive(self.prefix)
 
 
 class exclusive(str_return):
@@ -1377,38 +1364,17 @@ if __name__ == '__main__':
     print(cmd.status.alarm.enable_req.req())
     print(cmd.status.operation.enable_conf.val(100))
     print(cmd.status.questionable.condition.req())
-    #
-    # print("*" * 30)
-    # print(cmd.sense.voltage.ac.Range.combine())
-    # print(cmd.sense.voltage.ac.Resolution.combine())
-    # print(cmd.sense.voltage.ac.Bandwidth.combine())
-    #
-    # print("*" * 30)
-    # print(cmd.sense.current.dc.Aperture.combine())
-    # print(cmd.sense.current.dc.NPLC.combine())
-    # print(cmd.sense.current.dc.Range.combine())
-    # print(cmd.sense.current.dc.Range.Auto.combine())
-    # print(cmd.sense.current.dc.Resolution.combine())
-    #
-    # print("*" * 30)
-    # print(cmd.sense.resistance.Aperture.combine())
-    # print(cmd.sense.resistance.NPLC.combine())
-    # print(cmd.sense.resistance.Ocompensated.combine())
-    # print(cmd.sense.resistance.Range.combine())
-    # print(cmd.sense.resistance.Range.Auto.combine())
-    # print(cmd.sense.resistance.Resolution.combine())
-    #
-    # print("*" * 30)
-    # print(cmd.sense.fresistance.Aperture.combine())
-    # print(cmd.sense.fresistance.NPLC.combine())
-    # print(cmd.sense.fresistance.Ocompensated.combine())
-    # print(cmd.sense.fresistance.Range.combine())
-    # print(cmd.sense.fresistance.Range.Auto.combine())
-    # print(cmd.sense.fresistance.Resolution.combine())
 
-    # print("*" * 30)
-    # print(cmd.route.scan.str())
-    # print(cmd.route.scan.size.req())
+    print("")
+    print("ROUTE")
+    print("*" * 150)
+    print(cmd.route.scan.req.req())
+    print(cmd.route.scan.conf.ch.range(101,105))
+    print(cmd.route.scan.size.req())
+    print(cmd.route.open.conf.ch.list(102))
+    print(cmd.route.open.req.ch.range(102, 108))
+    print(cmd.route.close.conf.ch.list(102))
+    print(cmd.route.close.req.ch.range(102, 108))
     # print(cmd.route.scan.ch_range(0, 301, 320))
     # print(cmd.route.close.exclusive.str())
     # print(cmd.route.close.exclusive.ch_range(0,110,120))
