@@ -71,7 +71,7 @@ def ch_list_from_range2(min, max, channels_num=20):
     return f"(@{txt})"
 
 
-class com_interface():
+class com_interface:
     def __init__(self):
         # Commands Subsystem
         # this is the list of Subsystem commands
@@ -94,7 +94,7 @@ class com_interface():
                 baudrate=baudrate_var,
                 timeout=0.1
             )
-            if not self.ser.isOpen():
+            if not self.ser.isOpen:
                 self.ser.open()
 
             txt = '*IDN?'
@@ -167,7 +167,7 @@ class conf2(str):
         self.ch = select_channel2(self.prefix)
 
 
-class select_channel2():
+class select_channel2:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix
@@ -221,7 +221,7 @@ class str_and_req:
         return self.cmd + "?"
 
 
-class sel_ch_with_param():
+class sel_ch_with_param:
     def __init__(self, prefix, min, max):
         self.prefix = prefix
         self.cmd = self.prefix
@@ -313,7 +313,7 @@ class select_channel:
 #     def __get_range
 
 
-class storage():
+class storage:
     def __init__(self):
         self.cmd = None
         self.prefix = None
@@ -324,7 +324,7 @@ class storage():
         # self.calculate = calculate()
         # self.calibration = calibration()
         self.configure = configure()
-        # self.data = data()
+        #self.data = data()
         # self.diagnostic = diagnostic()
         # self.display = display()
         # self.fformat = fformat()
@@ -564,7 +564,7 @@ class req_on_off_ch_select:
 
 
 # part of ROUTE class
-class scan():
+class scan:
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "SCAN"
         self.cmd = self.prefix
@@ -575,7 +575,7 @@ class scan():
 
 
 # part of ROUTE class
-class open_close_ch():
+class open_close_ch:
     # This command opens the specified channels on a multiplexer or switch
     # module.
     def __init__(self, prefix):
@@ -604,7 +604,7 @@ class monitor(req, ch_single):
         self.state_conf_on = str3(self.prefix + ":" + "STATe" + " ON")
         self.state_conf_off = str3(self.prefix + ":" + "STATe" + " OFF")
 
-class route_channel():
+class route_channel:
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "CHANnel"
         self.cmd = self.prefix
@@ -612,7 +612,7 @@ class route_channel():
         self.fwire = req_on_off_ch_select(self.prefix + ":FWIRe")
         self.advance_source = trig_source(self.prefix + ":ADVance")
 
-class channel_delay():
+class channel_delay:
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "CHANnel"
         self.cmd = self.prefix
@@ -622,7 +622,7 @@ class channel_delay():
 
 
 
-class zero():
+class zero:
     # This queries the status of all relay operations on cards not involved in the
     # scan and returns a 1 when all relay operations are finished (even during
     # a scan). ONLY -> ROUTe:DONE?
@@ -634,7 +634,7 @@ class zero():
         self.auto_once = conf2(self.prefix + ":" + "AUTO" + " ONCE,")
 
 
-class sence_func():
+class sence_func:
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "FUNC"
         self.cmd = self.prefix
@@ -650,7 +650,7 @@ class sence_func():
         self.period = conf2(self.prefix + ' "PERiod",')
 
 
-class voltage():
+class voltage:
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "VOLTage"
         self.ac = ac(self.prefix)
@@ -659,14 +659,14 @@ class voltage():
             self.Range = Range(self.prefix)
 
 
-class current():
+class current:
     def __init__(self, prefix):
         self.prefix = prefix + ":" + "Current"
         self.ac = ac(self.prefix)
         self.dc = dc(self.prefix)
 
 
-class digital_byte():
+class digital_byte:
     # This command configures the instrument to scan the specified digital
     # input channels on the multifunction module as byte data, but does not
     # initiate the scan. This command redefines the scan list.
@@ -682,7 +682,7 @@ class digital_byte():
             self.req = req2(self.prefix)
 
 
-class digital_data():
+class digital_data:
     # This command configures the instrument to scan the specified digital
     # input channels on the multifunction module as byte data, but does not
     # initiate the scan. This command redefines the scan list.
@@ -793,7 +793,7 @@ class fresistance(select_channel):
             self.Ocompensated = Ocompensated(self.prefix)
 
 
-class totalize():
+class totalize:
     # This command configures the instrument to read the specified totalizer
     # channels on the multifunction module but does not initiate the scan. To
     # read the totalizer during a scan without resetting the count, set the
@@ -868,7 +868,7 @@ class Range(str_return):
         self.conf_max = conf2(self.prefix + " MAX,")
 
 
-class Resolution():
+class Resolution:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "RESolution"
@@ -908,7 +908,7 @@ class NPLC(str_return):
         self.conf_max = conf2(self.prefix + " 200,")
 
 
-class Ocompensated():
+class Ocompensated:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "OCOMpensated"
@@ -918,7 +918,7 @@ class Ocompensated():
         self.req = req2(self.prefix)
 
 
-class transduser():
+class transduser:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "TRANsducer"
@@ -929,7 +929,7 @@ class transduser():
         self.thermistor = thermistor(self.prefix)
 
 
-class rtd():
+class rtd:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "RTD"
@@ -939,7 +939,7 @@ class rtd():
         self.resistance = resistance_ref(self.prefix)
 
 
-class frtd():
+class frtd:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "FRTD"
@@ -949,7 +949,7 @@ class frtd():
         self.resistance = resistance_ref(self.prefix)
 
 
-class rtd_type():
+class rtd_type:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "TYPE"
@@ -959,7 +959,7 @@ class rtd_type():
         self.req = req2(self.prefix)
 
 
-class resistance_ref():
+class resistance_ref:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "RESistance:REFerence"
@@ -969,7 +969,7 @@ class resistance_ref():
         self.req = req2(self.prefix)
 
 
-class tcouple():
+class tcouple:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "TCouple"
@@ -979,7 +979,7 @@ class tcouple():
         self.type = tcouple_type(self.prefix)
 
 
-class tcouple_check():
+class tcouple_check:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "CHECk"
@@ -989,7 +989,7 @@ class tcouple_check():
         self.req = req2(self.prefix)
 
 
-class tcouple_rjunction():
+class tcouple_rjunction:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "RJUNction"
@@ -1000,7 +1000,7 @@ class tcouple_rjunction():
         self.type = junction_type(self.prefix)
 
 
-class junction_type():
+class junction_type:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "TYPE"
@@ -1011,7 +1011,7 @@ class junction_type():
         self.conf_fixed = conf2(self.prefix + " FIXed,")
 
 
-class tcouple_type():
+class tcouple_type:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "TYPE"
@@ -1027,7 +1027,7 @@ class tcouple_type():
         self.conf_T = conf2(self.prefix + " T,")
 
 
-class thermistor():
+class thermistor:
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + ":THERmistor:TYPE"
@@ -1038,7 +1038,7 @@ class thermistor():
         self.conf_type_10000 = conf2(self.prefix + " 10000,")
 
 
-class trigger():
+class trigger:
     # TRIGger:COUNt
     # TRIGger:COUNt?
     # TRIGger:SOURce
@@ -1067,7 +1067,7 @@ class trig_count(dig_param):
         self.max = 500000
 
 
-class trig_source():
+class trig_source:
     # Select the trigger source to control the onset of each sweep through the
     # scan list (a sweep is one pass through the scan list). The instrument will
     # accept a software (bus) command, an immediate (continuous) scan
@@ -1108,7 +1108,7 @@ class trig_timer(dig_param):
         self.min = 0
         self.max = 0.359999
 
-class source():
+class source:
     # SOURce:DIGital:DATA[:{BYTE|WORD}]
     # SOURce:DIGital:DATA[:{BYTE|WORD}]?
     # This command outputs a digital pattern as an 8-bit byte or 16-bit word to
@@ -1129,7 +1129,7 @@ class source():
         self.voltage = source_voltage(self.prefix)
 
 
-class source_voltage():
+class source_voltage:
     # This command sets the output voltage level for the specified DAC
     # channels on the 34907A Multifunction Module.
     def __init__(self, prefix):
@@ -1141,7 +1141,7 @@ class source_voltage():
         self.req = req2(self.prefix)
         self.conf = sel_ch_with_param(self.prefix, self.min, self.max)
 
-class status():
+class status:
     # *ESE
     # *ESE?
     # *ESR?
@@ -1173,7 +1173,7 @@ class status():
         self.operation = st_com(self.prefix + ":" + "OPERation" )
         self.questionable = st_com(self.prefix + ":" + "QUEStionable")
 
-class st_com():
+class st_com:
     # This command sets the output voltage level for the specified DAC
     # channels on the 34907A Multifunction Module.
     def __init__(self, prefix):
