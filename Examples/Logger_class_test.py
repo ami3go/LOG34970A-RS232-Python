@@ -1,6 +1,6 @@
 
 import src.LOG34970A_class as logdev
-import time
+
 log = logdev.LOG_34970A()
 
 log.init("COM9")

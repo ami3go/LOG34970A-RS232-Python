@@ -1,7 +1,9 @@
 
-import src.LOG34970A_v2_class as logger_class
 import datetime
 import time
+
+import src.LOG34970A_v2_class as logger_class
+
 log = logger_class.com_interface()
 cmd = logger_class.storage()
 log.init("COM11")

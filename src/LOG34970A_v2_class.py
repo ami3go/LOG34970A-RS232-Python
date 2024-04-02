@@ -1,8 +1,8 @@
 # import pyvisa # PyVisa info @ http://PyVisa.readthedocs.io/en/stable/
-import serial.tools.list_ports
 import serial
+import serial.tools.list_ports
 import time
-
+import pyvisa # PyVisa info @ http://PyVisa.readthedocs.io/en/stable/
 
 def range_check(val, min, max, val_name):
     if val > max:
@@ -121,6 +121,70 @@ class com_interface:
         self.ser.close()
         self.ser = None
 
+class usb_interface:
+    def __init__(self):
+        """
+        The methods will automatically look at the list of available device and search for AutoWave generator
+        """
+        dev = 'USB0::0x03EB::0x2065::GPIB_01_55137303031351C0D071::INSTR'
+        self.rm = pyvisa.ResourceManager()
+        rm_list = self.rm.list_resources()
+        self.res_name = ""
+        i = 0
+        for item in rm_list:
+            # print("Item:", item)
+            if dev in item:
+                self.res_name = item
+
+                self.app = self.rm.open_resource(self.res_name)
+                self.app.set_visa_attribute(pyvisa.constants.VI_ATTR_SEND_END_EN, 1)
+                self.app.write_termination = "\r\n"
+                print(item)
+                self.app.timeout = 5000  # timeout in ms
+                self.app.query_delay = 1  # write/read delay
+                time.sleep(1)
+                # print("Connected to: ", self.app.query("*IDN?"))
+                self.app.timeout = 10
+                break  # for uknown reason item appears two tiems
+                # print("Connected to: ", self.app.query(self.cmd.idn.req()))
+            # else:
+            #     print(f"Device with the name {dev_34401A} not found")
+
+    def send(self, cmd_str):
+        self.app.write(cmd_str)
+
+        # def cmd_query(self, txt_cmd):
+        #     return_val = self.app.query(txt_cmd)
+        #     return return_val
+
+    def query(self, cmd_str):
+        """
+        Query the regula VISA string. It will resend 10 time in case of any error
+        :param cmd_str: VISA string command
+        :type cmd_str: str
+        :return: VISA string replay
+        """
+        # delay_s = 1 #  Delay in seconds between write and read operations. If None, defaults to self.query_delay.
+        for i in range(10):
+            try:
+                # debug print to check how may tries
+                # print("trying",i)
+                return_str = self.app.query(cmd_str)
+                # regular delay according to datasheet before next command
+                return return_str
+
+            except Exception as e:
+                # print(f"query[{i}]: {cmd_str}, Reply: {return_str}, Error: {e}")
+                print(f"query[{i}]: {cmd_str}, Error: {e}")
+                time.sleep(3)
+
+    def close(self):
+        self.app.clear()
+        self.app.close()
+
+
+
+
 
 class str_return:
     def __init__(self):
@@ -139,7 +203,7 @@ class str_return:
         return txt
 
     def ch_range(self, is_req, min, max, channels_num=20):
-        ch_list_txt = ch_list_from_range(is_req, min, max, channels_num)
+        ch_list_txt = ch_list_from_range2(min, max)
         txt = f"{self.cmd}{ch_list_txt}"
         return txt
 
@@ -292,25 +356,9 @@ class select_channel:
         return txt
 
     def ch_range(self, min, max, channels_num=20):
-        ch_list_txt = ch_list_from_range(0, min, max, channels_num)
+        ch_list_txt = ch_list_from_range2( min, max)
         txt = f"{self.cmd}{ch_list_txt}"
         return txt
-
-
-# class select_channel_2params:
-#     def __init__(self, cmd):
-#         self.cmd = None
-#
-#     def ch_list(self, range, resolution,  *argv):
-#         ch_list_txt = ch_list_from_list(0, *argv)
-#         txt = f'{self.cmd}{ch_list_txt}'
-#         return txt
-#
-#     def ch_range(self, range, resolution, min, max, channels_num=20):
-#         ch_list_txt = ch_list_from_range(0,min,max,channels_num)
-#         txt = f"{self.cmd}{ch_list_txt}"
-#         return txt
-#     def __get_range
 
 
 class storage:
@@ -337,13 +385,15 @@ class storage:
         self.sense = sense()
         self.source = source()
         self.status = status()
-        # self.system = system()
+        self.system = system()
         self.trigger = trigger()
         self.route = route()
         self.abort = str3("ABORt")
         self.fetch = req3("FETCh")
         self.init = str3("INITiate")
-        self.read = req2("READ")
+        self.read = req3("READ")
+        self.idn = req3("*IDN")
+        self.reset = str3("*RST")
         self.r = dig_param3("R?", 1, 50000)
         self.unit_temperature = unit_temperature()
         self.input_impedance_auto = req_on_off_ch_select("INPut:IMPedance:AUTO")
@@ -364,10 +414,10 @@ class configure(req):
     # * CONFigure:VOLTage:AC
     # * CONFigure:VOLTage:DC
     def __init__(self):
-        print("INIT CONFIGURE")
+        # print("INIT CONFIGURE")
         super(configure, self).__init__()
-        self.prefix = "CONFigure"
-        self.cmd = "CONFigure"
+        self.prefix = "CONF"
+        self.cmd = "CONF"
         self.current = current(self.prefix)
         self.voltage = voltage(self.prefix)
         self.digital_byte = digital_byte(self.prefix)
@@ -377,6 +427,32 @@ class configure(req):
         self.resistance = resistance(self.prefix)
         self.fresistance = fresistance(self.prefix)
         self.totalize = totalize(self.prefix)
+
+
+class system:
+    # availanle commands for CONFigure
+    # * CONFigure?
+    # * CONFigure:CURRent:AC
+    # * CONFigure:CURRent:DC
+    # * CONFigure:DIGital:BYTE
+    # * CONFigure:FREQuency
+    # * CONFigure:FRESistance
+    # * CONFigure:PERiod
+    # * CONFigure:RESistance
+    # * CONFigure:TEMPerature
+    # * CONFigure:TOTalize
+    # * CONFigure:VOLTage:AC
+    # * CONFigure:VOLTage:DC
+    def __init__(self):
+        # print("INIT CONFIGURE"
+        self.prefix = "SYST"
+        self.cmd = "SYST"
+        self.alarm = req3(self.prefix + ":ALAR")
+        self.cpon = dig_param3(self.prefix + ":CPON", 1, 3)
+        self.ctype = req3(self.prefix + ":CTYPe")
+        self.error = req3(self.prefix + ":ERRor")
+        self.remote = str3(self.prefix + ":REMote")
+
 
 
 class measure:
@@ -394,7 +470,7 @@ class measure:
     # MEASure:VOLTage:DC?
 
     def __init__(self):
-        print("INIT Measure")
+        # print("INIT Measure")
         self.cmd = "MEASure"
         self.prefix = "MEASure"
         self.current = current(self.prefix)
@@ -488,9 +564,9 @@ class sense:
     # [SENSe:]ZERO:AUTO
     # [SENSe:]ZERO:AUTO?
     def __init__(self):
-        print("INIT Sense")
-        self.cmd = "SENSe"
-        self.prefix = "SENSe"
+        # print("INIT Sense")
+        self.cmd = "SENS"
+        self.prefix = "SENS"
         self.current = current(self.prefix)
         self.voltage = voltage(self.prefix)
         self.digital_byte = digital_data(self.prefix)
@@ -529,7 +605,7 @@ class route:
     # ROUTe: SCAN?
     # ROUTe: SCAN:SIZE?
     def __init__(self):
-        print("INIT ROUTE")
+        # print("INIT ROUTE")
         self.cmd = "ROUTe"
         self.prefix = "ROUTe"
         self.channel = route_channel(self.prefix)
@@ -544,7 +620,7 @@ class route:
 # **********  UNIT:TEMPerature *************
 class unit_temperature:
     def __init__(self):
-        print("INIT Read")
+        # print("INIT Read")
         self.prefix = "UNIT:TEMPerature"
         self.cmd = "UNIT:TEMPerature"
         self.req = req2(self.prefix)
@@ -639,20 +715,20 @@ class sence_func:
         self.prefix = prefix + ":" + "FUNC"
         self.cmd = self.prefix
         self.req = req2(self.prefix)
-        self.temperature = conf2(self.prefix + ' "TEMPerature",')
-        self.volt_dc = conf2(self.prefix + ' "VOLTage",')
-        self.volt_ac = conf2(self.prefix + ' "VOLTage:AC",')
-        self.resistance = conf2(self.prefix + ' "RESistance",')
-        self.fresistance = conf2(self.prefix + ' "FRESistance",')
-        self.current_dc = conf2(self.prefix + ' "CURRent",')
-        self.current_ac = conf2(self.prefix + ' "CURRent:AC",')
-        self.frequency = conf2(self.prefix + ' "FREQuency",')
-        self.period = conf2(self.prefix + ' "PERiod",')
+        self.temperature = conf2(self.prefix + ' "TEMP",')
+        self.volt_dc = conf2(self.prefix + ' "VOLT:DC",')
+        self.volt_ac = conf2(self.prefix + ' "VOLT:AC",')
+        self.resistance = conf2(self.prefix + ' "RES",')
+        self.fresistance = conf2(self.prefix + ' "FRES",')
+        self.current_dc = conf2(self.prefix + ' "CURR:DC",')
+        self.current_ac = conf2(self.prefix + ' "CURR:AC",')
+        self.frequency = conf2(self.prefix + ' "FREQ",')
+        self.period = conf2(self.prefix + ' "PER",')
 
 
 class voltage:
     def __init__(self, prefix):
-        self.prefix = prefix + ":" + "VOLTage"
+        self.prefix = prefix + ":" + "VOLT"
         self.ac = ac(self.prefix)
         self.dc = dc(self.prefix)
         if (self.prefix.find(":FREQuency:") != -1) or self.prefix.find(":PERiod:") != -1:
@@ -661,7 +737,7 @@ class voltage:
 
 class current:
     def __init__(self, prefix):
-        self.prefix = prefix + ":" + "Current"
+        self.prefix = prefix + ":" + "CURR"
         self.ac = ac(self.prefix)
         self.dc = dc(self.prefix)
 
@@ -713,7 +789,7 @@ class frequency(select_channel):
             self.conf = conf2(self.prefix + " ")
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
-        if self.prefix.find("SENSe:") != -1:
+        if self.prefix.find("SENS:") != -1:
             self.Range_lower_req = req2(self.prefix + ":RANGe:LOWer")
             self.Range_lower_conf = conf2(self.prefix + ":RANGe:LOWer")
             self.Volt_range_req = req2(self.prefix + ":VOLTage:RANGe")
@@ -748,7 +824,7 @@ class temperature(select_channel):
             self.conf = conf2(self.prefix + " ")
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
-        if self.prefix.find("SENSe:") != -1:
+        if self.prefix.find("SENS:") != -1:
             self.rjunction = req2(self.prefix + ":" + "RJUNction")
             self.transducer = transduser(self.prefix)
 
@@ -764,7 +840,7 @@ class resistance(select_channel):
             self.conf = conf2(self.prefix + " ")
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
-        if self.prefix.find("SENSe:") != -1:
+        if self.prefix.find("SENS:") != -1:
             self.Bandwidth = Bandwidth(self.prefix)
             self.Range = Range(self.prefix)
             self.Resolution = Resolution(self.prefix)
@@ -784,7 +860,7 @@ class fresistance(select_channel):
             self.conf = conf2(self.prefix + " ")
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
-        if self.prefix.find("SENSe:") != -1:
+        if self.prefix.find("SENS:") != -1:
             self.Bandwidth = Bandwidth(self.prefix)
             self.Range = Range(self.prefix)
             self.Resolution = Resolution(self.prefix)
@@ -823,7 +899,7 @@ class ac(select_channel):
             self.conf = conf2(self.prefix + " ")
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
-        if self.prefix.find("SENSe:") != -1:
+        if self.prefix.find("SENS:") != -1:
             self.Bandwidth = Bandwidth(self.prefix)
             self.Range = Range(self.prefix)
             self.Resolution = Resolution(self.prefix)
@@ -838,7 +914,7 @@ class dc(select_channel):
             self.conf = conf2(self.prefix + " ")
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
-        if self.prefix.find("SENSe:") != -1:
+        if self.prefix.find("SENS:") != -1:
             self.Range = Range(self.prefix)
             self.Resolution = Resolution(self.prefix)
             self.Aperture = Aperture(self.prefix)
@@ -863,6 +939,11 @@ class Range(str_return):
         self.prefix = self.cmd
         self.auto = req_on_off_ch_select(self.prefix + ":AUTO")
         self.conf = conf2(self.prefix + " ")
+        self.conf_100mV = conf2(self.prefix + " 100 mV,")
+        self.conf_1V = conf2(self.prefix + " 1V,")
+        self.conf_10V = conf2(self.prefix + " 10V,")
+        self.conf_100V = conf2(self.prefix + " 100V,")
+        self.conf_300V = conf2(self.prefix + " 300V,")
         self.req = req2(self.prefix)
         self.conf_min = conf2(self.prefix + " MIN,")
         self.conf_max = conf2(self.prefix + " MAX,")
@@ -1046,7 +1127,7 @@ class trigger:
     # TRIGger:TIMer
     # TRIGger:TIMer?
     def __init__(self):
-        print("INIT Trigger")
+        # print("INIT Trigger")
         self.cmd = "TRIGger"
         self.prefix = "TRIGger"
         self.count = trig_count(self.prefix)
@@ -1121,7 +1202,7 @@ class source:
     # SOURce:VOLTage
     # SOURce:VOLTage?
     def __init__(self):
-        print("INIT SOURce")
+        # print("INIT SOURce")
         self.cmd = "SOURce"
         self.prefix = "SOURce"
         self.digital_data = digital_data(self.prefix)
@@ -1161,7 +1242,7 @@ class status:
     # STATus:QUEStionable:ENABle?
     # STATus:QUEStionable[:EVENt]?
     def __init__(self):
-        print("INIT Status")
+        # print("INIT Status")
         self.cmd = "STATus"
         self.prefix = "STATus"
         self.ese = str_and_req("*ESE")
@@ -1200,8 +1281,8 @@ if __name__ == '__main__':
     print(cmd.r.val(100))
     print(cmd.init.str())
 
-    print(cmd.read.str())
-    print(cmd.read.ch.range(102, 105))
+    print(cmd.read.req())
+    # print(cmd.read.ch.range(102, 105))
 
     print(cmd.r.val(1000))
 
@@ -1221,45 +1302,46 @@ if __name__ == '__main__':
     print("*" * 150)
     print(cmd.configure.req())
 
-    print(cmd.configure.voltage.ac.conf.ch.range(101, 108))
-    print(cmd.configure.voltage.dc.conf.ch.range(101, 108))
+    # print(cmd.configure.voltage.ac.conf.ch.range(101, 108))
+    # print(cmd.configure.voltage.dc.conf.ch.range(101, 108))
+    #
+    # print(cmd.configure.current.ac.conf.ch.range(101, 108))
+    # print(cmd.configure.current.dc.conf.ch.range(101, 108))
 
-    print(cmd.configure.current.ac.conf.ch.range(101, 108))
-    print(cmd.configure.current.dc.conf.ch.range(101, 108))
-
-    print(cmd.configure.digital_byte.conf.ch.range(101, 110))
-
-    print(cmd.configure.resistance.conf.ch.range(101, 107))
-    print(cmd.configure.fresistance.conf.ch.range(101, 107))
-
-    print(cmd.configure.frequency.conf.ch.range(101, 110))
-    print(cmd.configure.period.conf.ch.range(101, 110))
-
-    print(cmd.configure.resistance.conf.ch.range(101, 110))
-
-    print(cmd.configure.temperature.conf.ch.range(101, 110))
-    print(cmd.configure.totalize.conf_read.ch.range(101, 110))
-
-    print("")
-    print("MEASURE")
-    print("*" * 150)
-    print(cmd.measure.voltage.ac.req.ch.range(109, 115))
-    print(cmd.measure.current.dc.req.ch.range(109, 115))
-    print(cmd.measure.digital_byte.req.ch.range(101, 120))
-    print(cmd.measure.frequency.req.ch.range(101, 120))
-    print(cmd.measure.period.req.ch.range(101, 120))
-    print(cmd.measure.temperature.req.ch.range(101, 120))
-    print(cmd.measure.totalize.req_read.ch.range(101, 120))
-    print(cmd.measure.totalize.req_rres.ch.range(101, 120))
-    print(cmd.measure.resistance.req.ch.range(101, 120))
-    print(cmd.measure.fresistance.req.ch.range(101, 120))
+    # print(cmd.configure.digital_byte.conf.ch.range(101, 110))
+    #
+    # print(cmd.configure.resistance.conf.ch.range(101, 107))
+    # print(cmd.configure.fresistance.conf.ch.range(101, 107))
+    #
+    # print(cmd.configure.frequency.conf.ch.range(101, 110))
+    # print(cmd.configure.period.conf.ch.range(101, 110))
+    #
+    # print(cmd.configure.resistance.conf.ch.range(101, 110))
+    #
+    # # print(cmd.configure.temperature.conf.ch.range(101, 110))
+    # print(cmd.configure.totalize.conf_read.ch.range(101, 110))
+    #
+    # print("")
+    # print("MEASURE")
+    # print("*" * 150)
+    # print(cmd.measure.voltage.ac.req.ch.range(109, 115))
+    # print(cmd.measure.voltage.dc.req.ch.range(109, 115))
+    # print(cmd.measure.current.dc.req.ch.range(109, 115))
+    # print(cmd.measure.digital_byte.req.ch.range(101, 120))
+    # print(cmd.measure.frequency.req.ch.range(101, 120))
+    # print(cmd.measure.period.req.ch.range(101, 120))
+    # print(cmd.measure.temperature.req.ch.range(101, 120))
+    # print(cmd.measure.totalize.req_read.ch.range(101, 120))
+    # print(cmd.measure.totalize.req_rres.ch.range(101, 120))
+    # print(cmd.measure.resistance.req.ch.range(101, 120))
+    # print(cmd.measure.fresistance.req.ch.range(101, 120))
 
     print("")
     print("sense")
     print("*" * 150)
-
-    print(cmd.sense.current.ac.Bandwidth.conf_200.ch.list(102, 105))
-    print(cmd.sense.current.ac.Bandwidth.conf_3.ch.list(101))
+    print(cmd.sense.voltage.dc.NPLC.conf_10.ch.range(101, 103))
+    # print(cmd.sense.current.ac.Bandwidth.conf_200.ch.list(102, 105))
+    # print(cmd.sense.current.ac.Bandwidth.conf_3.ch.list(101))
     print(cmd.sense.current.ac.Range.req.ch.range(102, 105))
     print(cmd.sense.current.ac.Range.auto.req.ch.range(102, 105))
     print(cmd.sense.current.ac.Range.auto.off.ch.range(102, 105))
@@ -1343,4 +1425,5 @@ if __name__ == '__main__':
     print(cmd.route.channel.fwire.req.ch.list(102))
     print(cmd.route.channel.advance_source.bus.str())
     print(cmd.route.channel.advance_source.external.str())
+
 

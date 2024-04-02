@@ -20,12 +20,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d1d4e796-9773-4182-b7a5-812f3cd0b65c" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/aws.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/DMM34411A.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/DMM34411A.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Examples/Logger_class_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/Logger_class_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/Logger_class_v2_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/Logger_class_v2_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Examples/test_code.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/test_code.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/LOG34970A_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/LOG34970A_class.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -36,17 +38,23 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 7
+}]]></component>
   <component name="ProjectId" id="1rZiDO6QYytdZIYMgX96VQFIsNF" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">
-    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
-    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/achestni/Documents/PycharmProjects/Libraries/DMM34401A"
+  }
+}]]></component>
   <component name="RunManager" selected="Python.LOG34970A_v2_class">
     <configuration name="LOG34970A_v2_class" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="DMM34411A" />
@@ -131,28 +139,14 @@
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
-    <option name="oldMeFiltersMigrated" value="true" />
-  </component>
-  <component name="WindowStateProjectService">
-    <state width="1899" height="294" key="GridCell.Tab.0.bottom" timestamp="1622222234484">
-      <screen x="1920" y="0" width="1920" height="1080" />
-    </state>
-    <state width="1899" height="294" key="GridCell.Tab.0.bottom/0.0.1536.864/1920.0.1920.1080@1920.0.1920.1080" timestamp="1622222234484" />
-    <state width="1899" height="294" key="GridCell.Tab.0.center" timestamp="1622222234484">
-      <screen x="1920" y="0" width="1920" height="1080" />
-    </state>
-    <state width="1899" height="294" key="GridCell.Tab.0.center/0.0.1536.864/1920.0.1920.1080@1920.0.1920.1080" timestamp="1622222234484" />
-    <state width="1899" height="294" key="GridCell.Tab.0.left" timestamp="1622222234484">
-      <screen x="1920" y="0" width="1920" height="1080" />
-    </state>
-    <state width="1899" height="294" key="GridCell.Tab.0.left/0.0.1536.864/1920.0.1920.1080@1920.0.1920.1080" timestamp="1622222234484" />
-    <state width="1899" height="294" key="GridCell.Tab.0.right" timestamp="1622222234484">
-      <screen x="1920" y="0" width="1920" height="1080" />
-    </state>
-    <state width="1899" height="294" key="GridCell.Tab.0.right/0.0.1536.864/1920.0.1920.1080@1920.0.1920.1080" timestamp="1622222234484" />
-    <state x="2543" y="235" width="672" height="678" key="search.everywhere.popup" timestamp="1622221613083">
-      <screen x="1920" y="0" width="1920" height="1080" />
-    </state>
-    <state x="2543" y="235" width="672" height="678" key="search.everywhere.popup/0.0.1536.864/1920.0.1920.1080@1920.0.1920.1080" timestamp="1622221613083" />
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

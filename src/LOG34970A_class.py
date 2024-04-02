@@ -1,7 +1,7 @@
 #import pyvisa # PyVisa info @ http://PyVisa.readthedocs.io/en/stable/
-import serial.tools.list_ports
 import serial
-import time
+import serial.tools.list_ports
+
 
 def range_check(val, min, max, val_name):
     if val > max:
