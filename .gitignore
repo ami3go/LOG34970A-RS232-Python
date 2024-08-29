@@ -25,6 +25,7 @@ wheels/
 *.egg
 *.xml
 *.iml
+*.csv
 MANIFEST
 
 # PyInstaller
