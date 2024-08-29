@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="BranchesTreeState">
     <expand>
       <path>
@@ -20,27 +23,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d1d4e796-9773-4182-b7a5-812f3cd0b65c" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/DMM34411A.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/DMM34411A.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Examples/Logger_class_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/Logger_class_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Examples/Logger_class_v2_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/Logger_class_v2_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Examples/test_code.py" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/test_code.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/LOG34970A_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/LOG34970A_class.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/LOG34970A_v2_class.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Functions/Voltage_measurements_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/NGI_voltage_meas.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Examples/NGI_voltage_meas.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/Voltage_measurements.py" beforeDir="false" afterPath="$PROJECT_DIR$/Functions/Voltage_measurements.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Examples/test_code.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="1rZiDO6QYytdZIYMgX96VQFIsNF" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
@@ -49,15 +54,29 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python.LOG34970A_v2_class.executor": "Run",
+    "Python.Logger_class_v2_test_usb.executor": "Run",
+    "Python.Voltage_measurements_test.executor": "Run",
+    "Python.test_code.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "main",
-    "last_opened_file_path": "C:/Users/achestni/Documents/PycharmProjects/Libraries/DMM34401A"
+    "last_opened_file_path": "C:/Users/achestni/Documents/PycharmProjects/Libraries/LOG34970A/Examples",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
 }]]></component>
-  <component name="RunManager" selected="Python.LOG34970A_v2_class">
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\achestni\Documents\PycharmProjects\Libraries\LOG34970A\Examples" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\achestni\Documents\PycharmProjects\Libraries\LOG34970A\Functions" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.Voltage_measurements_test">
     <configuration name="LOG34970A_v2_class" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="DMM34411A" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -79,6 +98,7 @@
     </configuration>
     <configuration name="Logger_class_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="DMM34411A" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -98,8 +118,53 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="Logger_class_v2_test_usb" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="DMM34411A" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Examples" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Examples/Logger_class_v2_test_usb.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Voltage_measurements_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="DMM34411A" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Functions" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Functions/Voltage_measurements_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="test_code" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="DMM34411A" />
+      <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -121,11 +186,20 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.LOG34970A_v2_class" />
+        <item itemvalue="Python.Voltage_measurements_test" />
         <item itemvalue="Python.test_code" />
+        <item itemvalue="Python.Logger_class_v2_test_usb" />
+        <item itemvalue="Python.LOG34970A_v2_class" />
         <item itemvalue="Python.Logger_class_test" />
       </list>
     </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-09665e90c3a7-d3b881c8e49f-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-233.15026.15" />
+      </set>
+    </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
