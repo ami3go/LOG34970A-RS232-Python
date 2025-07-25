@@ -23,9 +23,6 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-*.xml
-*.iml
-*.csv
 MANIFEST
 
 # PyInstaller
@@ -124,4 +121,4 @@ dmypy.json
 .idea/misc.xml
 .idea/workspace.xml
 .idea/workspace.xml
-/.idea
+*.xml
