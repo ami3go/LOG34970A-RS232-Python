@@ -127,6 +127,7 @@ class usb_interface:
         The methods will automatically look at the list of available device and search for AutoWave generator
         """
         dev = 'USB0::0x03EB::0x2065::GPIB_01_55137303031351C0D071::INSTR'
+        dev = 'USB0::0x03EB::0x2065::GPIB_01_55137303031351C0D071::0::INSTR'
         self.rm = pyvisa.ResourceManager()
         rm_list = self.rm.list_resources()
         self.res_name = ""
