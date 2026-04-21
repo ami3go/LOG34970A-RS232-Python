@@ -17,7 +17,7 @@ def range_check(val, min, max, val_name):
 # def ch_list_from_range(is_req, min, max, add_space=1, channels_num=20 ):
 #     channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
 #     channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
-#     channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
+#     channels_34908 = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
 #     req_txt = "?" if is_req == 1 else ""
 #     space_txt = " " if add_space == 1 else ""
 #     channels = channels_num
@@ -56,7 +56,7 @@ def ch_list_from_list2(*argv):
 def ch_list_from_range2(min, max, channels_num=20):
     channels_34901A = 20  # 34901A 20 Channel Multiplexer (2/4-wire) Module
     channels_34902A = 16  # 34902A 16 Channel Multiplexer (2/4-wire) Module
-    channels_34902A = 40  # 34908A 40 Channel Single-Ended Multiplexer Module
+    channels_34908 = 40  # 34908 40 Channel Single-Ended Multiplexer Module
     channels = channels_num
     slot_id = int(min / 100)
     slot_id = range_check(slot_id, 1, 3, "slot ID")
