@@ -1,5 +1,5 @@
 
-import src.LOG34970A_class as logdev
+import PyTxtLogger.LOG34970A_class as logdev
 
 log = logdev.LOG_34970A()
 

@@ -2,7 +2,7 @@
 import datetime
 import time
 import csv
-import src.LOG34970A_v2_class as logger_class
+import PyTxtLogger.LOG34970A_v2_class as logger_class
 
 log = logger_class.usb_interface()
 cmd = logger_class.storage()

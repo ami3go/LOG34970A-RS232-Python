@@ -2,9 +2,9 @@
 import datetime
 import time
 
-import src.LOG34970A_v2_class as logger_class
+import PyTxtLogger.LOG34970A_v2_class as logger_class
 
-log = logger_class.com_interface()
+log = logger_class.EaPs9000T()
 cmd = logger_class.storage()
 log.init("COM11")
 
