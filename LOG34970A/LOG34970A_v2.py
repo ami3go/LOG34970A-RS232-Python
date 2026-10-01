@@ -1,8 +1,23 @@
-# import pyvisa # PyVisa info @ http://PyVisa.readthedocs.io/en/stable/
-import serial
 import serial.tools.list_ports
 import time
-import pyvisa # PyVisa info @ http://PyVisa.readthedocs.io/en/stable/
+
+import pyvisa  # only used here to enumerate VISA resources; I/O goes through VisaTransport
+
+from scpi_driver_core import ScpiClient, ScpiDriverError
+from scpi_driver_core.scpi.codec import ScpiTextCodec
+from scpi_driver_core.transport.models import FlushDirection, TransportState
+from scpi_driver_core.transport.serial import SerialTransport
+from scpi_driver_core.transport.visa import VisaTransport
+
+# RS232 framing used by this instrument: commands are terminated with CRLF,
+# responses with LF (matches the previous hand-rolled pyserial readline()).
+_RS232_CODEC = ScpiTextCodec(command_terminator=b"\r\n", response_terminator=b"\n")
+
+# VISA (USBTMC/GPIB) framing: commands are terminated with CRLF (matches the
+# previous app.write_termination = "\r\n"). response_terminator=None means a
+# reply is read as one whole VISA message (EOI-delimited), matching the
+# previous behaviour of never setting read_termination on the pyvisa resource.
+_VISA_CODEC = ScpiTextCodec(command_terminator=b"\r\n", response_terminator=None)
 
 def range_check(val, min, max, val_name):
     if val > max:
@@ -71,16 +86,38 @@ def ch_list_from_range2(min, max, channels_num=20):
     return f"(@{txt})"
 
 
-class com_interface:
-    def __init__(self):
-        # Commands Subsystem
-        # this is the list of Subsystem commands
-        # super(communicator, self).__init__(port="COM10",baudrate=115200, timeout=0.1)
-        print("communicator init")
-        self.cmd = None
-        self.ser = None
+# default USB/GPIB VISA resource substring for the Keysight IO Libraries
+# bridge (USBTMC over a GPIB-USB adapter)
+_DEFAULT_USB_RESOURCE_SUBSTRING = 'USB0::0x03EB::0x2065::GPIB_01_55137303031351C0D071::0::INSTR'
 
-    def init(self, com_port, baudrate_var=115200):
+
+class LOG34970A:
+    """34970A connection over either RS232 (serial) or USB/GPIB (VISA).
+
+    Both connect_serial() and connect_usb() leave the instance in the same
+    state: send()/query()/close() behave identically afterwards regardless of
+    which physical connection was used.
+    """
+
+    # write/read delay (s) and post-connect read timeout used on the VISA
+    # path, kept from the original usb_interface driver; see
+    # docs/scpi-driver-core.md "Worth knowing".
+    _USB_QUERY_DELAY_S = 1
+    # NOTE: the original driver set this to 10ms after connecting, which is too
+    # short for a real reply and is only survivable because of the retry loop
+    # in _query_usb(). Kept as-is; see docs/scpi-driver-core.md "Worth knowing".
+    _USB_POST_CONNECT_TIMEOUT_S = 0.010
+
+    def __init__(self):
+        self.cmd = None
+        self._client = None
+        self._connection = None  # "serial" or "usb", set by connect_*()
+        self._rm = None  # VISA ResourceManager, only held for "usb"
+
+    # -- connecting ---------------------------------------------------
+
+    def connect_serial(self, com_port, baudrate_var=115200):
+        """Connect over RS232. Returns False if com_port isn't present."""
         com_port_list = [comport.device for comport in serial.tools.list_ports.comports()]
         if com_port not in com_port_list:
             print("COM port is not found")
@@ -88,100 +125,99 @@ class com_interface:
             print(f"Please check COM port Number. Currently it is {com_port} ")
             print(f'Founded COM ports:{com_port_list}')
             return False
-        else:
-            self.ser = serial.Serial(
-                port=com_port,
-                baudrate=baudrate_var,
-                timeout=0.1
-            )
-            if not self.ser.isOpen:
-                self.ser.open()
 
-            txt = '*IDN?'
+        transport = SerialTransport(
+            com_port,
+            baudrate=baudrate_var,
+            timeout_s=0.1,
+            write_timeout_s=5.0,
+        )
+        self._client = ScpiClient(transport, codec=_RS232_CODEC)
+        self._connection = "serial"
+        transport.open()
 
-            read_back = self.query(txt)
-            print(f"Connected to: {read_back}")
-            return True
+        read_back = self.query('*IDN?')
+        print(f"Connected to: {read_back}")
+        return True
+
+    def connect_usb(self, resource_substring=_DEFAULT_USB_RESOURCE_SUBSTRING, timeout_s=5.0):
+        """Connect over USB/GPIB through the Keysight IO Libraries VISA backend.
+
+        Scans the VISA resource list for one containing resource_substring,
+        the same discovery this driver has always used for the native USB-GPIB
+        bridge. Returns False if no matching resource is found.
+        """
+        self._rm = pyvisa.ResourceManager()
+        resource_name = next(
+            (item for item in self._rm.list_resources() if resource_substring in item), None
+        )
+        if resource_name is None:
+            print(f"No VISA resource matching {resource_substring!r} found")
+            print(f"Found VISA resources: {list(self._rm.list_resources())}")
+            self._rm.close()
+            self._rm = None
+            return False
+
+        transport = VisaTransport(resource_name, timeout_s=timeout_s, resource_manager=self._rm)
+        self._client = ScpiClient(transport, codec=_VISA_CODEC)
+        self._connection = "usb"
+        transport.open()
+        print(resource_name)
+        time.sleep(1)
+
+        read_back = self.query('*IDN?')
+        print(f"Connected to: {read_back}")
+        return True
+
+    # -- communication --------------------------------------------------
 
     def send(self, txt):
-        # will put sending command here
-        txt = f'{txt}\r\n'
-        # print(f'Sending: {txt}')
-        self.ser.write(txt.encode())
+        self._client.write(txt)
 
     def query(self, cmd_srt):
-        txt = f'{cmd_srt}\r\n'
-        self.ser.reset_input_buffer()
-        self.ser.write(txt.encode())
-        # print(f'Query: {txt}')
-        return_val = self.ser.readline().decode()
-        return return_val
+        if self._connection == "serial":
+            return self._query_serial(cmd_srt)
+        return self._query_usb(cmd_srt)
 
-    def close(self):
-        self.ser.close()
-        self.ser = None
+    def _query_serial(self, cmd_srt):
+        # matches the previous reset_input_buffer() before every query
+        self._client.transport.flush(FlushDirection.INPUT)
+        return self._client.query(cmd_srt)
 
-class usb_interface:
-    def __init__(self):
+    def _query_usb(self, cmd_srt):
+        """Query the VISA resource. Resends up to 10 times in case of any error.
+
+        :param cmd_srt: VISA string command
+        :type cmd_srt: str
+        :return: VISA string reply
         """
-        The methods will automatically look at the list of available device and search for AutoWave generator
-        """
-        dev = 'USB0::0x03EB::0x2065::GPIB_01_55137303031351C0D071::INSTR'
-        dev = 'USB0::0x03EB::0x2065::GPIB_01_55137303031351C0D071::0::INSTR'
-        self.rm = pyvisa.ResourceManager()
-        rm_list = self.rm.list_resources()
-        self.res_name = ""
-        i = 0
-        for item in rm_list:
-            # print("Item:", item)
-            if dev in item:
-                self.res_name = item
-
-                self.app = self.rm.open_resource(self.res_name)
-                self.app.set_visa_attribute(pyvisa.constants.VI_ATTR_SEND_END_EN, 1)
-                self.app.write_termination = "\r\n"
-                print(item)
-                self.app.timeout = 5000  # timeout in ms
-                self.app.query_delay = 1  # write/read delay
-                time.sleep(1)
-                # print("Connected to: ", self.app.query("*IDN?"))
-                self.app.timeout = 10
-                break  # for uknown reason item appears two tiems
-                # print("Connected to: ", self.app.query(self.cmd.idn.req()))
-            # else:
-            #     print(f"Device with the name {dev_34401A} not found")
-
-    def send(self, cmd_str):
-        self.app.write(cmd_str)
-
-        # def cmd_query(self, txt_cmd):
-        #     return_val = self.app.query(txt_cmd)
-        #     return return_val
-
-    def query(self, cmd_str):
-        """
-        Query the regula VISA string. It will resend 10 time in case of any error
-        :param cmd_str: VISA string command
-        :type cmd_str: str
-        :return: VISA string replay
-        """
-        # delay_s = 1 #  Delay in seconds between write and read operations. If None, defaults to self.query_delay.
         for i in range(10):
             try:
-                # debug print to check how may tries
-                # print("trying",i)
-                return_str = self.app.query(cmd_str)
+                self._client.write(cmd_srt)
                 # regular delay according to datasheet before next command
-                return return_str
+                time.sleep(self._USB_QUERY_DELAY_S)
+                raw = self._client.read_bytes(
+                    self._client.response_request, timeout_s=self._USB_POST_CONNECT_TIMEOUT_S
+                )
+                return self._client.codec.decode_response(raw)
 
-            except Exception as e:
-                # print(f"query[{i}]: {cmd_str}, Reply: {return_str}, Error: {e}")
-                print(f"query[{i}]: {cmd_str}, Error: {e}")
+            except ScpiDriverError as e:
+                print(f"query[{i}]: {cmd_srt}, Error: {e}")
+                # a read that times out leaves the core transport FAULTED
+                # (see docs/scpi-driver-core.md); reopen before the next try
+                if self._client.transport.state is TransportState.FAULTED:
+                    self._client.transport.open()
                 time.sleep(3)
 
     def close(self):
-        self.app.clear()
-        self.app.close()
+        if self._connection == "usb":
+            self._client.transport.flush(FlushDirection.BOTH)
+        self._client.transport.close()
+        self._client = None
+        if self._rm is not None:
+            self._rm.close()
+            self._rm = None
+        self._connection = None
 
 
 
@@ -306,6 +342,52 @@ class sel_ch_with_param:
         return txt
 
 
+class sel_ch_with_value:
+    # Like sel_ch_with_param, but the leading value is passed through as-is
+    # (a discrete keyword, or a number with no documented/enforceable
+    # range) instead of being numerically range-checked.
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+
+    def list(self, value, *argv):
+        ch_list_txt = ch_list_from_list2(*argv)
+        txt = f'{self.cmd} {value},{ch_list_txt}'
+        return txt
+
+    def range(self, value, ch_min, ch_max, ch_num=20):
+        ch_list_txt = ch_list_from_range2(ch_min, ch_max, ch_num)
+        txt = f"{self.cmd} {value},{ch_list_txt}"
+        return txt
+
+
+class discrete_setting:
+    # A discrete-value set/query pair with no channel-list argument, e.g.
+    # OUTPut:ALARm:MODE {LATCh|TRACk}.
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+        self.req = req3(self.prefix)
+
+    def conf(self, value):
+        return f'{self.cmd} {value}'
+
+
+class bool_setting:
+    # A boolean set/query pair with no channel-list argument, e.g.
+    # FORMat:READing:ALARm {OFF|0|ON|1}.
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+        self.req = req3(self.prefix)
+
+    def on(self):
+        return f'{self.cmd} ON'
+
+    def off(self):
+        return f'{self.cmd} OFF'
+
+
 class dig_param:
     def __init__(self):
         self.cmd = None  # this value to be inherited for high order class
@@ -362,27 +444,271 @@ class select_channel:
         return txt
 
 
+# **********  DATA Subsystem *************
+class data_last:
+    # DATA:LAST? [<num_rdgs>,](@<channel>)  -- note: a single channel, not a
+    # scan list.
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+
+    def req(self, channel, num_rdgs=None):
+        count_txt = f'{num_rdgs},' if num_rdgs is not None else ''
+        return f'{self.cmd}? {count_txt}(@{channel})'
+
+
+class data_remove:
+    # DATA:REMove? <num_rdgs> -- a query that also takes a parameter.
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+        self.min = 1
+        self.max = 50000
+
+    def req(self, num_rdgs):
+        num_rdgs = range_check(num_rdgs, self.min, self.max, self.cmd)
+        return f'{self.cmd}? {num_rdgs}'
+
+
+class data:
+    # DATA:LAST? [<num_rdgs>,](@<channel>)
+    # DATA:POINts?
+    # DATA:POINts:EVENt:THReshold <num_rdgs>
+    # DATA:POINts:EVENt:THReshold?
+    # DATA:REMove? <num_rdgs>
+    def __init__(self):
+        self.cmd = "DATA"
+        self.prefix = "DATA"
+        self.last = data_last(self.prefix + ":LAST")
+        self.points_req = req3(self.prefix + ":POINts")
+        self.points_event_threshold = dig_param3(self.prefix + ":POINts:EVENt:THReshold", 0, 50000)
+        self.points_event_threshold_req = req3(self.prefix + ":POINts:EVENt:THReshold")
+        self.remove = data_remove(self.prefix + ":REMove")
+
+
+# **********  DISPlay Subsystem *************
+class display_text:
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+        self.req = req3(self.prefix)
+        self.clear = str3(self.prefix + ":CLEar")
+
+    def conf(self, message):
+        return f'{self.cmd} "{message}"'
+
+
+class display:
+    # DISPlay <state> / DISPlay?
+    # DISPlay:TEXT <quoted_string> / DISPlay:TEXT? / DISPlay:TEXT:CLEar
+    def __init__(self):
+        self.cmd = "DISPlay"
+        self.prefix = "DISPlay"
+        self.req = req3(self.prefix)
+        self.on = str3(self.prefix + " ON")
+        self.off = str3(self.prefix + " OFF")
+        self.text = display_text(self.prefix + ":TEXT")
+
+
+# **********  FORMat Subsystem *************
+class fformat_time_type:
+    def __init__(self, prefix):
+        self.prefix = prefix + ":TYPE"
+        self.cmd = self.prefix
+        self.req = req3(self.prefix)
+        self.absolute = str3(self.prefix + " ABSolute")
+        self.relative = str3(self.prefix + " RELative")
+
+
+class fformat:
+    # FORMat:READing:{ALARm|CHANnel|TIME|UNIT} {OFF|0|ON|1} / ?
+    # FORMat:READing:TIME:TYPE {ABSolute|RELative} / ?
+    # These control what accompanies each reading pulled from a scan (READ?/
+    # FETCh?); they apply instrument-wide, not per channel.
+    def __init__(self):
+        self.cmd = "FORMat:READing"
+        self.prefix = "FORMat:READing"
+        self.alarm = bool_setting(self.prefix + ":ALARm")
+        self.channel = bool_setting(self.prefix + ":CHANnel")
+        self.time = bool_setting(self.prefix + ":TIME")
+        self.time_type = fformat_time_type(self.prefix + ":TIME")
+        self.unit = bool_setting(self.prefix + ":UNIT")
+
+
+# **********  MEMory Subsystem *************
+class memory_state_name:
+    # MEMory:STATe:NAME <location>[,<name>] / MEMory:STATe:NAME? <location>
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+        self.min = 0
+        self.max = 5
+
+    def conf(self, location, name):
+        location = range_check(location, self.min, self.max, self.cmd)
+        return f'{self.cmd} {location},"{name}"'
+
+    def req(self, location):
+        location = range_check(location, self.min, self.max, self.cmd)
+        return f'{self.cmd}? {location}'
+
+
+class memory_state_valid:
+    # MEMory:STATe:VALid? <location>
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+        self.min = 0
+        self.max = 5
+
+    def req(self, location):
+        location = range_check(location, self.min, self.max, self.cmd)
+        return f'{self.cmd}? {location}'
+
+
+class memory:
+    # MEMory:NSTates? -- always 6 locations (0-5) on the 34970A/34972A.
+    # MEMory:STATe:DELete <location>
+    # MEMory:STATe:NAME <location>[,<name>] / ?
+    # MEMory:STATe:RECall:AUTO {OFF|0|ON|1} / ?
+    # MEMory:STATe:VALid? <location>
+    def __init__(self):
+        self.cmd = "MEMory"
+        self.prefix = "MEMory"
+        self.nstates_req = req3(self.prefix + ":NSTates")
+        self.state_delete = dig_param3(self.prefix + ":STATe:DELete", 0, 5)
+        self.state_name = memory_state_name(self.prefix + ":STATe:NAME")
+        self.state_recall_auto = bool_setting(self.prefix + ":STATe:RECall:AUTO")
+        self.state_valid = memory_state_valid(self.prefix + ":STATe:VALid")
+
+
+# **********  OUTPut Subsystem *************
+class output_alarm_channel:
+    # OUTPut:ALARm{1|2|3|4}:CLEar
+    # OUTPut:ALARm{1|2|3|4}:SOURce (@<ch_list>) / ?
+    def __init__(self, prefix, alarm_num):
+        self.prefix = f'{prefix}{alarm_num}'
+        self.cmd = self.prefix
+        self.clear = str3(self.prefix + ":CLEar")
+        self.source = conf2(self.prefix + ":SOURce ")
+        self.source_req = req3(self.prefix + ":SOURce")
+
+
+class output:
+    # OUTPut:ALARm:CLEar:ALL
+    # OUTPut:ALARm:MODE {LATCh|TRACk} / ?
+    # OUTPut:ALARm:SLOPe {NEGative|POSitive} / ?
+    # OUTPut:ALARm{1|2|3|4}:CLEar / :SOURce
+    def __init__(self):
+        self.cmd = "OUTPut"
+        self.prefix = "OUTPut"
+        alarm_prefix = self.prefix + ":ALARm"
+        self.clear_all = str3(alarm_prefix + ":CLEar:ALL")
+        self.mode = discrete_setting(alarm_prefix + ":MODE")
+        self.mode_latch = str3(alarm_prefix + ":MODE LATCh")
+        self.mode_track = str3(alarm_prefix + ":MODE TRACk")
+        self.slope = discrete_setting(alarm_prefix + ":SLOPe")
+        self.slope_negative = str3(alarm_prefix + ":SLOPe NEGative")
+        self.slope_positive = str3(alarm_prefix + ":SLOPe POSitive")
+        self.alarm1 = output_alarm_channel(alarm_prefix, 1)
+        self.alarm2 = output_alarm_channel(alarm_prefix, 2)
+        self.alarm3 = output_alarm_channel(alarm_prefix, 3)
+        self.alarm4 = output_alarm_channel(alarm_prefix, 4)
+
+
+# **********  CALCulate Subsystem *************
+# Requires the instrument's internal DMM to store readings and perform
+# calculations (see the Command Reference's CALCulate Subsystem
+# Introduction); an error is returned if it is disabled or not installed.
+class calculate_average:
+    def __init__(self, prefix):
+        self.prefix = prefix + ":AVERage"
+        self.cmd = self.prefix
+        self.average_req = req2(self.prefix + ":AVERage")
+        self.clear = conf2(self.prefix + ":CLEar ")
+        self.count_req = req2(self.prefix + ":COUNt")
+        self.maximum_req = req2(self.prefix + ":MAXimum")
+        self.maximum_time_req = req2(self.prefix + ":MAXimum:TIME")
+        self.minimum_req = req2(self.prefix + ":MINimum")
+        self.minimum_time_req = req2(self.prefix + ":MINimum:TIME")
+        self.ptpeak_req = req2(self.prefix + ":PTPeak")
+
+
+class calculate_compare:
+    def __init__(self, prefix):
+        self.prefix = prefix + ":COMPare"
+        self.cmd = self.prefix
+        self.data = sel_ch_with_value(self.prefix + ":DATA")
+        self.data_req = req2(self.prefix + ":DATA")
+        self.mask = sel_ch_with_value(self.prefix + ":MASK")
+        self.mask_req = req2(self.prefix + ":MASK")
+        self.state = req_on_off_ch_select(self.prefix + ":STATe")
+        self.type = sel_ch_with_value(self.prefix + ":TYPE")
+        self.type_req = req2(self.prefix + ":TYPE")
+
+
+class calculate_limit:
+    def __init__(self, prefix):
+        self.prefix = prefix + ":LIMit"
+        self.cmd = self.prefix
+        self.lower = sel_ch_with_value(self.prefix + ":LOWer")
+        self.lower_req = req2(self.prefix + ":LOWer")
+        self.lower_state = req_on_off_ch_select(self.prefix + ":LOWer:STATe")
+        self.upper = sel_ch_with_value(self.prefix + ":UPPer")
+        self.upper_req = req2(self.prefix + ":UPPer")
+        self.upper_state = req_on_off_ch_select(self.prefix + ":UPPer:STATe")
+
+
+class calculate_scale:
+    def __init__(self, prefix):
+        self.prefix = prefix + ":SCALe"
+        self.cmd = self.prefix
+        self.gain = sel_ch_with_value(self.prefix + ":GAIN")
+        self.gain_req = req2(self.prefix + ":GAIN")
+        self.offset = sel_ch_with_value(self.prefix + ":OFFSet")
+        self.offset_req = req2(self.prefix + ":OFFSet")
+        self.offset_null = conf2(self.prefix + ":OFFSet:NULL ")
+        self.state = req_on_off_ch_select(self.prefix + ":STATe")
+        self.unit = sel_ch_with_value(self.prefix + ":UNIT")
+        self.unit_req = req2(self.prefix + ":UNIT")
+
+
+class calculate:
+    def __init__(self):
+        self.cmd = "CALCulate"
+        self.prefix = "CALCulate"
+        self.average = calculate_average(self.prefix)
+        self.compare = calculate_compare(self.prefix)
+        self.limit = calculate_limit(self.prefix)
+        self.scale = calculate_scale(self.prefix)
+
+
 class storage:
     def __init__(self):
         self.cmd = None
         self.prefix = None
         # super(communicator, self).__init__()
         # super(storage,self).__init__()
-        # communicator.init(self, "COM10")
         # this is the list of Subsystem commands
-        # self.calculate = calculate()
-        # self.calibration = calibration()
+        self.calculate = calculate()
+        # CALibration subsystem intentionally not implemented: it exposes a
+        # calibration security code and writes calibration constants to the
+        # instrument. See docs/scpi-driver-core.md.
         self.configure = configure()
-        #self.data = data()
-        # self.diagnostic = diagnostic()
-        # self.display = display()
-        # self.fformat = fformat()
-        # self.ieee-488.2 = ieee-488.2()
-        # self.instrument = instrument()
+        self.data = data()
+        # DIAGnostic subsystem intentionally not implemented: engineering/
+        # service-only slot-memory peek/poke. See docs/scpi-driver-core.md.
+        self.display = display()
+        self.fformat = fformat()
+        # INSTrument subsystem intentionally not implemented: controls the
+        # 34972A's internal DMM module, which this driver targets the
+        # 34970A without. See docs/scpi-driver-core.md.
         self.measure = measure()
-        # self.memory = memory()
-        # self.mmemory = mmemory()
-        # self.output = output()
+        self.memory = memory()
+        # MMEMory subsystem (USB mass-storage export/import) intentionally
+        # not implemented: not applicable over RS232/GPIB. See
+        # docs/scpi-driver-core.md.
+        self.output = output()
         self.sense = sense()
         self.source = source()
         self.status = status()
@@ -398,6 +724,18 @@ class storage:
         self.r = dig_param3("R?", 1, 50000)
         self.unit_temperature = unit_temperature()
         self.input_impedance_auto = req_on_off_ch_select("INPut:IMPedance:AUTO")
+        # IEEE-488.2 common commands not already covered by status.ese/esr/
+        # sre/stb above, or by idn/reset(*RST) above.
+        self.cls = str3("*CLS")
+        self.opc = str3("*OPC")
+        self.opc_req = req3("*OPC")
+        self.psc = dig_param3("*PSC", 0, 1)
+        self.psc_req = req3("*PSC")
+        self.rcl = dig_param3("*RCL", 0, 5)
+        self.sav = dig_param3("*SAV", 0, 5)
+        self.trg = str3("*TRG")
+        self.tst_req = req3("*TST")
+        self.wai = str3("*WAI")
 
 
 class configure(req):
@@ -417,7 +755,12 @@ class configure(req):
     def __init__(self):
         # print("INIT CONFIGURE")
         super(configure, self).__init__()
-        self.prefix = "CONF"
+        # NOTE: self.prefix must be the long form "CONFigure", not the short
+        # "CONF", because every child class below gates its .conf attribute
+        # on `self.prefix.find("CONFigure:")`. Using the short form here used
+        # to make that check fail silently everywhere, so cmd.configure.*.conf
+        # never existed (see docs/scpi-driver-core.md).
+        self.prefix = "CONFigure"
         self.cmd = "CONF"
         self.current = current(self.prefix)
         self.voltage = voltage(self.prefix)
@@ -430,29 +773,64 @@ class configure(req):
         self.totalize = totalize(self.prefix)
 
 
+class system_date:
+    # SYSTem:DATE <yyyy>,<mm>,<dd> / SYSTem:DATE?
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+        self.req = req3(self.prefix)
+
+    def conf(self, year, month, day):
+        # NOTE: this module's own `class str:` shadows the builtin, so
+        # zero-padding is done with an f-string format spec, not str().
+        return f'{self.cmd} {year},{month:02d},{day:02d}'
+
+
+class system_time:
+    # SYSTem:TIME <hh>,<mm>,<ss.sss> / SYSTem:TIME? / SYSTem:TIME:SCAN?
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+        self.req = req3(self.prefix)
+        self.scan_req = req3(self.prefix + ":SCAN")
+
+    def conf(self, hour, minute, second):
+        return f'{self.cmd} {hour:02d},{minute:02d},{second:06.3f}'
+
+
 class system:
-    # availanle commands for CONFigure
-    # * CONFigure?
-    # * CONFigure:CURRent:AC
-    # * CONFigure:CURRent:DC
-    # * CONFigure:DIGital:BYTE
-    # * CONFigure:FREQuency
-    # * CONFigure:FRESistance
-    # * CONFigure:PERiod
-    # * CONFigure:RESistance
-    # * CONFigure:TEMPerature
-    # * CONFigure:TOTalize
-    # * CONFigure:VOLTage:AC
-    # * CONFigure:VOLTage:DC
+    # SYSTem:ALARm? / :CPON <slot> / :CTYPe? <slot> / :DATE / :ERRor?
+    # SYSTem:INTerface {GPIB|RS232} / :LANGuage / :LFRequency?
+    # SYSTem:LOCal / :LOCK:* / :PRESet / :REMote / :RWLock / :TIME / :VERSion?
+    #
+    # Intentionally not implemented: SYSTem:SECurity[:IMMediate], which
+    # irreversibly erases all instrument memory except calibration data and
+    # reboots (see docs/scpi-driver-core.md), and the
+    # SYSTem:COMMunicate:LAN:* subtree, which only applies to LAN-equipped
+    # models and is out of scope for this RS232/USB-GPIB driver.
     def __init__(self):
-        # print("INIT CONFIGURE"
         self.prefix = "SYST"
         self.cmd = "SYST"
         self.alarm = req3(self.prefix + ":ALAR")
         self.cpon = dig_param3(self.prefix + ":CPON", 1, 3)
         self.ctype = req3(self.prefix + ":CTYPe")
+        self.date = system_date(self.prefix + ":DATE")
         self.error = req3(self.prefix + ":ERRor")
+        self.interface = discrete_setting(self.prefix + ":INTerface")
+        self.interface_gpib = str3(self.prefix + ":INTerface GPIB")
+        self.interface_rs232 = str3(self.prefix + ":INTerface RS232")
+        self.language = discrete_setting(self.prefix + ":LANGuage")
+        self.lfrequency_req = req3(self.prefix + ":LFRequency")
+        self.local = str3(self.prefix + ":LOCal")
+        self.lock_name_req = req3(self.prefix + ":LOCK:NAME")
+        self.lock_owner_req = req3(self.prefix + ":LOCK:OWNer")
+        self.lock_release = str3(self.prefix + ":LOCK:RELease")
+        self.lock_request_req = req3(self.prefix + ":LOCK:REQuest")
+        self.preset = str3(self.prefix + ":PRESet")
         self.remote = str3(self.prefix + ":REMote")
+        self.rwlock = str3(self.prefix + ":RWLock")
+        self.time = system_time(self.prefix + ":TIME")
+        self.version_req = req3(self.prefix + ":VERSion")
 
 
 
@@ -576,7 +954,7 @@ class sense:
         self.temperature = temperature(self.prefix)
         self.resistance = resistance(self.prefix)
         self.fresistance = fresistance(self.prefix)
-        self.totalize = totalize(self.prefix)
+        self.totalize = sense_totalize(self.prefix)
         self.func = sence_func(self.prefix)
         self.zero = zero(self.prefix)
 
@@ -795,7 +1173,7 @@ class frequency(select_channel):
             self.Range_lower_conf = conf2(self.prefix + ":RANGe:LOWer")
             self.Volt_range_req = req2(self.prefix + ":VOLTage:RANGe")
             self.Volt_range_conf = conf2(self.prefix + ":VOLTage:RANGe")
-            self.voltage = voltage(self.prefix)
+            self.Volt_range_auto = req_on_off_ch_select(self.prefix + ":VOLTage:RANGe:AUTO")
             self.Aperture = Aperture(self.prefix)
 
 
@@ -812,6 +1190,29 @@ class period(select_channel):
             self.conf = conf2(self.prefix + " ")
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
+        if self.prefix.find("SENS:") != -1:
+            self.Volt_range_req = req2(self.prefix + ":VOLTage:RANGe")
+            self.Volt_range_conf = conf2(self.prefix + ":VOLTage:RANGe")
+            self.Volt_range_auto = req_on_off_ch_select(self.prefix + ":VOLTage:RANGe:AUTO")
+            self.Aperture = Aperture(self.prefix)
+
+
+class temperature_conf:
+    # CONFigure:TEMPerature / MEASure:TEMPerature? both require a probe_type
+    # and sensor_type ahead of the channel list, unlike every other
+    # CONFigure/MEASure function in this driver:
+    #   CONFigure:TEMPerature {<probe_type>|DEF},{<type>|DEF},(@<scan_list>)
+    def __init__(self, prefix):
+        self.prefix = prefix
+        self.cmd = self.prefix
+
+    def list(self, probe_type="DEF", sensor_type="DEF", *argv):
+        ch_list_txt = ch_list_from_list2(*argv)
+        return f'{self.cmd} {probe_type},{sensor_type},{ch_list_txt}'
+
+    def range(self, probe_type, sensor_type, ch_min, ch_max, ch_num=20):
+        ch_list_txt = ch_list_from_range2(ch_min, ch_max, ch_num)
+        return f'{self.cmd} {probe_type},{sensor_type},{ch_list_txt}'
 
 
 class temperature(select_channel):
@@ -822,12 +1223,14 @@ class temperature(select_channel):
         self.prefix = prefix + ":" + "TEMPerature"
         self.cmd = self.prefix
         if self.prefix.find("CONFigure:") != -1:
-            self.conf = conf2(self.prefix + " ")
+            self.conf = temperature_conf(self.prefix)
         if self.prefix.find("MEASure:") != -1:
-            self.req = req2(self.prefix)
+            self.req = temperature_conf(self.prefix + "?")
         if self.prefix.find("SENS:") != -1:
             self.rjunction = req2(self.prefix + ":" + "RJUNction")
             self.transducer = transduser(self.prefix)
+            self.Aperture = Aperture(self.prefix)
+            self.NPLC = NPLC(self.prefix)
 
 
 class resistance(select_channel):
@@ -842,7 +1245,8 @@ class resistance(select_channel):
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
         if self.prefix.find("SENS:") != -1:
-            self.Bandwidth = Bandwidth(self.prefix)
+            # No Bandwidth parameter for [SENSe:]RESistance (that only
+            # applies to the AC current/voltage functions).
             self.Range = Range(self.prefix)
             self.Resolution = Resolution(self.prefix)
             self.Aperture = Aperture(self.prefix)
@@ -862,7 +1266,7 @@ class fresistance(select_channel):
         if self.prefix.find("MEASure:") != -1:
             self.req = req2(self.prefix)
         if self.prefix.find("SENS:") != -1:
-            self.Bandwidth = Bandwidth(self.prefix)
+            # No Bandwidth parameter for [SENSe:]FRESistance either.
             self.Range = Range(self.prefix)
             self.Resolution = Resolution(self.prefix)
             self.Aperture = Aperture(self.prefix)
@@ -891,7 +1295,32 @@ class totalize:
             self.req_rres = conf2(self.prefix + "?" + " RRES,")
 
 
+class sense_totalize:
+    # [SENSe:]TOTalize:* — a distinct command tree from CONFigure/
+    # MEASure:TOTalize's READ/RRESet mode selector above; this one drives the
+    # 34907A's hardware totalizer channel directly.
+    #   [SENSe:]TOTalize:CLEar:IMMediate [(@<ch_list>)]
+    #   [SENSe:]TOTalize:DATA? [(@<ch_list>)]
+    #   [SENSe:]TOTalize:SLOPe {NEGative|POSitive}[,(@<ch_list>)]
+    #   [SENSe:]TOTalize:STARt[:IMMediate] [(@<ch_list>)]
+    #   [SENSe:]TOTalize:STOP[:IMMediate] [(@<ch_list>)]
+    #   [SENSe:]TOTalize:TYPE {READ|RRESet}[,(@<ch_list>)]
+    def __init__(self, prefix):
+        self.prefix = prefix + ":" + "TOTalize"
+        self.cmd = self.prefix
+        self.clear_immediate = conf2(self.prefix + ":CLEar:IMMediate ")
+        self.data_req = req2(self.prefix + ":DATA")
+        self.slope = sel_ch_with_value(self.prefix + ":SLOPe")
+        self.slope_req = req2(self.prefix + ":SLOPe")
+        self.start_immediate = conf2(self.prefix + ":STARt:IMMediate ")
+        self.stop_immediate = conf2(self.prefix + ":STOP:IMMediate ")
+        self.type = sel_ch_with_value(self.prefix + ":TYPE")
+        self.type_req = req2(self.prefix + ":TYPE")
+
+
 class ac(select_channel):
+    # [SENSe:]CURRent:AC has a Resolution parameter; [SENSe:]VOLTage:AC does
+    # not (see the 34970A/72A Command Reference SENSe Subsystem summary).
     def __init__(self, prefix):
         self.prefix = prefix
         self.cmd = self.prefix + ":" + "AC"
@@ -903,7 +1332,8 @@ class ac(select_channel):
         if self.prefix.find("SENS:") != -1:
             self.Bandwidth = Bandwidth(self.prefix)
             self.Range = Range(self.prefix)
-            self.Resolution = Resolution(self.prefix)
+            if self.prefix.find("CURR") != -1:
+                self.Resolution = Resolution(self.prefix)
 
 
 class dc(select_channel):
@@ -1303,39 +1733,40 @@ if __name__ == '__main__':
     print("*" * 150)
     print(cmd.configure.req())
 
-    # print(cmd.configure.voltage.ac.conf.ch.range(101, 108))
-    # print(cmd.configure.voltage.dc.conf.ch.range(101, 108))
-    #
-    # print(cmd.configure.current.ac.conf.ch.range(101, 108))
-    # print(cmd.configure.current.dc.conf.ch.range(101, 108))
+    # NOTE: these used to be commented out because cmd.configure.*.conf
+    # never existed (see the fix for configure.prefix near its class
+    # definition, and docs/scpi-driver-core.md).
+    print(cmd.configure.voltage.ac.conf.ch.range(101, 108))
+    print(cmd.configure.voltage.dc.conf.ch.range(101, 108))
 
-    # print(cmd.configure.digital_byte.conf.ch.range(101, 110))
-    #
-    # print(cmd.configure.resistance.conf.ch.range(101, 107))
-    # print(cmd.configure.fresistance.conf.ch.range(101, 107))
-    #
-    # print(cmd.configure.frequency.conf.ch.range(101, 110))
-    # print(cmd.configure.period.conf.ch.range(101, 110))
-    #
-    # print(cmd.configure.resistance.conf.ch.range(101, 110))
-    #
-    # # print(cmd.configure.temperature.conf.ch.range(101, 110))
-    # print(cmd.configure.totalize.conf_read.ch.range(101, 110))
-    #
-    # print("")
-    # print("MEASURE")
-    # print("*" * 150)
-    # print(cmd.measure.voltage.ac.req.ch.range(109, 115))
-    # print(cmd.measure.voltage.dc.req.ch.range(109, 115))
-    # print(cmd.measure.current.dc.req.ch.range(109, 115))
-    # print(cmd.measure.digital_byte.req.ch.range(101, 120))
-    # print(cmd.measure.frequency.req.ch.range(101, 120))
-    # print(cmd.measure.period.req.ch.range(101, 120))
-    # print(cmd.measure.temperature.req.ch.range(101, 120))
-    # print(cmd.measure.totalize.req_read.ch.range(101, 120))
-    # print(cmd.measure.totalize.req_rres.ch.range(101, 120))
-    # print(cmd.measure.resistance.req.ch.range(101, 120))
-    # print(cmd.measure.fresistance.req.ch.range(101, 120))
+    print(cmd.configure.current.ac.conf.ch.range(101, 108))
+    print(cmd.configure.current.dc.conf.ch.range(101, 108))
+
+    print(cmd.configure.digital_byte.conf.ch.range(101, 110))
+
+    print(cmd.configure.resistance.conf.ch.range(101, 107))
+    print(cmd.configure.fresistance.conf.ch.range(101, 107))
+
+    print(cmd.configure.frequency.conf.ch.range(101, 110))
+    print(cmd.configure.period.conf.ch.range(101, 110))
+
+    print(cmd.configure.temperature.conf.range("DEF", "DEF", 101, 110))
+    print(cmd.configure.totalize.conf_read.ch.range(101, 110))
+
+    print("")
+    print("MEASURE")
+    print("*" * 150)
+    print(cmd.measure.voltage.ac.req.ch.range(109, 115))
+    print(cmd.measure.voltage.dc.req.ch.range(109, 115))
+    print(cmd.measure.current.dc.req.ch.range(109, 115))
+    print(cmd.measure.digital_byte.req.ch.range(101, 120))
+    print(cmd.measure.frequency.req.ch.range(101, 120))
+    print(cmd.measure.period.req.ch.range(101, 120))
+    print(cmd.measure.temperature.req.range("DEF", "DEF", 101, 120))
+    print(cmd.measure.totalize.req_read.ch.range(101, 120))
+    print(cmd.measure.totalize.req_rres.ch.range(101, 120))
+    print(cmd.measure.resistance.req.ch.range(101, 120))
+    print(cmd.measure.fresistance.req.ch.range(101, 120))
 
     print("")
     print("sense")
@@ -1359,7 +1790,7 @@ if __name__ == '__main__':
     print(cmd.sense.digital_byte.req_byte.ch.range(101, 105))
     print(cmd.sense.digital_byte.req_word.ch.range(101, 105))
 
-    print(cmd.sense.frequency.voltage.Range.auto.off.ch.list(101))
+    print(cmd.sense.frequency.Volt_range_auto.off.ch.list(101))
 
     print(cmd.sense.zero.auto.off.ch.list(102))
     print(cmd.sense.func.req.ch.list(120))
@@ -1426,5 +1857,53 @@ if __name__ == '__main__':
     print(cmd.route.channel.fwire.req.ch.list(102))
     print(cmd.route.channel.advance_source.bus.str())
     print(cmd.route.channel.advance_source.external.str())
+
+    print("")
+    print("SENSE: TOTALIZE / PERIOD / TEMPERATURE additions")
+    print("*" * 150)
+    print(cmd.sense.totalize.clear_immediate.ch.list(107))
+    print(cmd.sense.totalize.data_req.ch.list(107))
+    print(cmd.sense.totalize.slope.list("POSitive", 107))
+    print(cmd.sense.totalize.start_immediate.ch.list(107))
+    print(cmd.sense.totalize.type.list("RRES", 107))
+    print(cmd.sense.period.Aperture.req.ch.range(101, 102))
+    print(cmd.sense.period.Volt_range_auto.off.ch.list(101))
+    print(cmd.sense.temperature.Aperture.conf_min.ch.list(101))
+    print(cmd.sense.temperature.NPLC.conf_10.ch.list(101))
+
+    print("")
+    print("DATA / DISPlay / FORMat:READing")
+    print("*" * 150)
+    print(cmd.data.last.req(310, 5))
+    print(cmd.data.points_req.req())
+    print(cmd.data.points_event_threshold.val(1000))
+    print(cmd.data.remove.req(50))
+    print(cmd.display.text.conf("WAITING..."))
+    print(cmd.display.text.clear.str())
+    print(cmd.fformat.alarm.on())
+    print(cmd.fformat.time_type.absolute.str())
+
+    print("")
+    print("MEMory / OUTPut / CALCulate")
+    print("*" * 150)
+    print(cmd.memory.nstates_req.req())
+    print(cmd.memory.state_name.conf(1, "bench setup"))
+    print(cmd.memory.state_recall_auto.on())
+    print(cmd.output.mode_latch.str())
+    print(cmd.output.alarm1.source.ch.range(101, 105))
+    print(cmd.calculate.limit.upper.list("50", 101))
+    print(cmd.calculate.limit.upper_state.on.ch.list(101))
+    print(cmd.calculate.scale.gain.list("2", 101))
+
+    print("")
+    print("SYSTem / IEEE-488.2 additions")
+    print("*" * 150)
+    print(cmd.system.date.conf(2026, 9, 30))
+    print(cmd.system.time.conf(14, 5, 1.123))
+    print(cmd.system.version_req.req())
+    print(cmd.system.preset.str())
+    print(cmd.cls.str())
+    print(cmd.opc_req.req())
+    print(cmd.trg.str())
 
 

@@ -2,16 +2,16 @@
 import datetime
 import time
 
-import PyTxtLogger.LOG34970A_v2_class as logger_class
+import LOG34970A.LOG34970A_v2 as logger_class
 
-log = logger_class.EaPs9000T()
+log = logger_class.LOG34970A()
 cmd = logger_class.storage()
-log.init("COM11")
+log.connect_serial("COM11")
 
-log.send(cmd.configure.voltage.dc.ch_range(0, 301, 316))
+log.send(cmd.configure.voltage.dc.conf.ch.range(301, 316))
 time.sleep(3)
 
-log.send(cmd.route.scan.ch_range(0, 301, 316))
+log.send(cmd.route.scan.conf.ch.range(301, 316))
 time.sleep(3)
 
 signals_names = ["Time,",

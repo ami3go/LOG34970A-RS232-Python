@@ -1,10 +1,11 @@
 
 import datetime
 import time
-import PyTxtLogger.LOG34970A_v2_class as logger_class
+import LOG34970A.LOG34970A_v2 as logger_class
 
 global log, cmd, channels
-log = logger_class.usb_interface()
+log = logger_class.LOG34970A()
+log.connect_usb()
 cmd = logger_class.storage()
 def_chs = [101, 116]
 
@@ -14,7 +15,7 @@ def init_logger(channels=[101, 104]):
         cmd.reset.str(),
         cmd.route.scan.conf.ch.range(channels[0], channels[1]),
         cmd.sense.voltage.dc.NPLC.conf_1.ch.range(channels[0], channels[1]),
-        cmd.sense.temperature.conf.ch.range(channels[0], channels[1])),
+        cmd.sense.temperature.conf.ch.range(channels[0], channels[1]),
     ]
 
     # apply setting from the list
@@ -39,5 +40,6 @@ def read_voltage():
 
 
 if __name__ == '__main__':
-    log = logger_class.usb_interface()
+    log = logger_class.LOG34970A()
+    log.connect_usb()
     # print(log.send("*IDN?"))

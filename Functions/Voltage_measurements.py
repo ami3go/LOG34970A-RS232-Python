@@ -4,7 +4,8 @@ import time
 import LOG34970A.LOG34970A_v2 as logger_class
 
 global log, cmd, channels
-log = logger_class.usb_interface()
+log = logger_class.LOG34970A()
+log.connect_usb()
 cmd = logger_class.storage()
 def_chs = [101, 116]
 
@@ -39,5 +40,6 @@ def read_voltage():
 
 
 if __name__ == '__main__':
-    log = logger_class.usb_interface()
+    log = logger_class.LOG34970A()
+    log.connect_usb()
     # print(log.send("*IDN?"))

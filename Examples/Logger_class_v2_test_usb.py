@@ -2,9 +2,10 @@
 import datetime
 import time
 import csv
-import PyTxtLogger.LOG34970A_v2_class as logger_class
+import LOG34970A.LOG34970A_v2 as logger_class
 
-log = logger_class.usb_interface()
+log = logger_class.LOG34970A()
+log.connect_usb()
 cmd = logger_class.storage()
 channels = [101, 116]
 

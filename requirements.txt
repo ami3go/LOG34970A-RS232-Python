@@ -1,0 +1,6 @@
+pyserial>=3.5
+pyvisa>=1.14
+# scpi-driver-core has no PyPI release yet (pre-1.0, private repo); pinned to
+# a commit on the source repo. Installing requires git access to
+# ami3go/scpi-driver-core. See docs/scpi-driver-core.md.
+scpi-driver-core @ git+https://github.com/ami3go/scpi-driver-core.git@ec19ab88906d8e6ac270b30d7615ce7e75dc6a08
