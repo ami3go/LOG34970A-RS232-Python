@@ -1,0 +1,223 @@
+# Machine-readable description of LOG34970A's public Python API, for an AI
+# agent to plan and generate tests against without reading source code.
+#
+# NOT A FULL LPDS-017 CONTRACT. This repo has no LPDS-013 capability model,
+# LPDS-015 plugin manifest, LPDS-007 exception hierarchy, or LPDS-003
+# BaseInstrument base class, so several LPDS-017-mandatory fields
+# (capability_id, the full LPDS-002 risk_level wiring, canonical state
+# names) have nothing to validate against here. This file follows
+# LPDS-017's section layout (see
+# https://github.com/ami3go/Lab-equipment-pyDrivers/blob/master/AI_Guides/LPDS-017_AI_Driver_Contract.md)
+# as closely as is honest for a plain, framework-independent driver at this
+# maturity level. See "conformance" at the bottom.
+
+identity:
+  driver_name: LOG34970A
+  distribution_name: LOG34970A-RS232-Python
+  driver_import_path: LOG34970A.LOG34970A_v2
+  driver_class: LOG34970A
+  supported_models:
+    - Agilent 34970A
+    - Agilent 34972A
+    - Keysight 34970A
+    - Keysight 34972A
+  repository: "https://github.com/ami3go/LOG34970A-RS232-Python"
+
+mental_model: >
+  A 34970A is a data acquisition / switch unit: a mainframe with up to three
+  plug-in modules (multiplexer, switch, or multifunction), each providing
+  20-40 channels addressed as <slot><channel>, e.g. 101 is channel 1 on the
+  module in slot 1. The instrument measures one function at a time (DC
+  voltage, AC voltage, DC current, AC current, 2- or 4-wire resistance,
+  frequency, period, temperature, or digital/totalizer I/O) across a
+  configured scan list of channels, and is read either synchronously
+  (READ?) or by triggering a scan (INITiate) and pulling results back later
+  (FETCh?). This driver does not interpret measurement results or manage
+  scan state itself; it sends SCPI strings built by the separate storage()
+  command tree and returns whatever the instrument replies with.
+
+architecture_note: >
+  Unlike a typical LPDS-002 driver, this driver does not expose one Python
+  method per instrument operation. Its public surface is five connection/
+  I/O methods (below) plus a separate, framework-independent SCPI string
+  builder, storage(), in the same module, that mirrors the instrument's own
+  SCPI subsystem tree (configure, measure, sense, route, source, status,
+  system, data, display, fformat, memory, output, calculate, ...). An agent
+  generating a test calls storage() once, builds command strings from its
+  attributes (e.g. cmd.sense.voltage.dc.NPLC.conf_10.ch.range(101, 108)),
+  and passes those strings to send()/query(). See
+  LOG34970A/Command_coverage.txt for the exhaustive list of what storage()
+  can build, cross-checked against the vendor's Command Reference.
+
+state_machine:
+  states: [DISCONNECTED, CONNECTED, FAULTED]
+  note: >
+    Not the LPDS-003 canonical enum (no BaseInstrument base class here).
+    DISCONNECTED -> CONNECTED via connect_serial() or connect_usb().
+    CONNECTED -> DISCONNECTED via close(). On the USB/GPIB path only, a
+    timed-out read can transiently drive the underlying transport to
+    FAULTED; query() recovers from this automatically by reopening before
+    its next retry, so FAULTED is never observable from the public API.
+
+resources:
+  consumed:
+    - "one serial port (RS232 path) or one VISA resource (USB/GPIB path), held exclusively between connect_*() and close()"
+  provided: []
+
+dependencies:
+  required:
+    - "pyserial >=3.5"
+    - "pyvisa >=1.14"
+    - "scpi-driver-core, pinned via git in requirements.txt (no PyPI release yet)"
+  optional: []
+
+capabilities:
+  - method: connect_serial
+    signature: "connect_serial(self, com_port: str, baudrate_var: int = 115200) -> bool"
+    purpose: "Open an RS232 connection and query *IDN? to confirm the link."
+    inputs:
+      com_port: {type: str, description: "OS-level COM port name, e.g. 'COM11' or '/dev/ttyUSB0'"}
+      baudrate_var: {type: int, default: 115200}
+    outputs:
+      return: {type: bool, description: "True on success; False if com_port isn't in the system's port list (returned, not raised)"}
+    preconditions: [DISCONNECTED]
+    postconditions: ["CONNECTED on True", "DISCONNECTED on False"]
+    side_effects: "opens a SerialTransport; sends *IDN? and prints the reply"
+    risk_level: low
+    timing: "~0.1-1s typical"
+    stabilization_delay: "none"
+    retry_policy: "none (caller's responsibility)"
+    errors: [scpi_driver_core.ConfigurationError, scpi_driver_core.TransportError, scpi_driver_core.TransportTimeoutError]
+    exclusive_resources: ["the serial port named by com_port"]
+
+  - method: connect_usb
+    signature: "connect_usb(self, resource_substring: str = _DEFAULT_USB_RESOURCE_SUBSTRING, timeout_s: float = 5.0) -> bool"
+    purpose: "Scan VISA resources for one matching resource_substring, open it, and query *IDN? to confirm the link."
+    inputs:
+      resource_substring: {type: str, description: "defaults to the Keysight IO Libraries USB-GPIB bridge VISA ID baked into the module"}
+      timeout_s: {type: float, default: 5.0}
+    outputs:
+      return: {type: bool, description: "True on success; False if no matching VISA resource is found"}
+    preconditions: [DISCONNECTED]
+    postconditions: ["CONNECTED on True", "DISCONNECTED on False"]
+    side_effects: "opens a VisaTransport; sends *IDN? and prints the reply; sleeps 1s after opening"
+    risk_level: low
+    timing: "~1-6s typical (includes a fixed 1s settle sleep)"
+    stabilization_delay: "1s after open, before the first query"
+    retry_policy: "none at connect time (see query's own retry policy)"
+    errors: [scpi_driver_core.ConfigurationError, scpi_driver_core.TransportError, scpi_driver_core.TransportTimeoutError]
+    exclusive_resources: ["the matched VISA resource"]
+
+  - method: send
+    signature: "send(self, txt: str) -> None"
+    purpose: "Write one SCPI command with no reply expected."
+    inputs:
+      txt: {type: str, description: "a SCPI command string, typically built from storage()"}
+    outputs:
+      return: {type: "None"}
+    preconditions: [CONNECTED]
+    postconditions: [CONNECTED]
+    side_effects: "whatever the instrument does in response to txt - this driver does not validate or interpret it"
+    risk_level: medium
+    timing: "~tens of ms"
+    stabilization_delay: "none"
+    retry_policy: "never retried (a repeated write can double a trigger/output-enable)"
+    errors: [scpi_driver_core.NotConnectedError, scpi_driver_core.TransportError, scpi_driver_core.TransportTimeoutError]
+    exclusive_resources: []
+
+  - method: query
+    signature: "query(self, cmd_srt: str) -> str"
+    purpose: "Write one SCPI query and return its decoded reply."
+    inputs:
+      cmd_srt: {type: str, description: "a SCPI query string, typically ending in '?', built from storage()"}
+    outputs:
+      return: {type: str, description: "the decoded reply; on RS232 the trailing line terminator is stripped, on USB/GPIB it is not - see docs/scpi-driver-core.md"}
+    preconditions: [CONNECTED]
+    postconditions: [CONNECTED]
+    side_effects: "RS232 path flushes buffered input before writing. USB/GPIB path retries up to 10 times with a 3s backoff on any scpi_driver_core error, reopening the transport first if a read fault left it closed."
+    risk_level: low
+    timing: "RS232: ~tens of ms. USB/GPIB: at least 1s per attempt (fixed settle delay) plus up to 10 retries 3s apart on failure."
+    stabilization_delay: "USB/GPIB path waits 1s between writing and reading on every call, by design - see docs/scpi-driver-core.md"
+    retry_policy: "RS232: none. USB/GPIB: up to 10 attempts, 3s apart, only on scpi_driver_core.ScpiDriverError."
+    errors: [scpi_driver_core.NotConnectedError, scpi_driver_core.TransportError, scpi_driver_core.TransportTimeoutError]
+    exclusive_resources: []
+
+  - method: close
+    signature: "close(self) -> None"
+    purpose: "Release the transport (and, on USB/GPIB, the VISA resource manager)."
+    inputs: {}
+    outputs:
+      return: {type: "None"}
+    preconditions: [CONNECTED]
+    postconditions: [DISCONNECTED]
+    side_effects: "USB/GPIB path also issues a VISA device clear (resource.clear()) before closing."
+    risk_level: low
+    timing: "~tens of ms"
+    stabilization_delay: "none"
+    retry_policy: "none"
+    errors: []
+    known_issue: "calling close() when not CONNECTED raises AttributeError (self._client is None), not a documented scpi_driver_core exception - treat close() as callable exactly once per successful connect_*()."
+    exclusive_resources: []
+
+error_catalogue:
+  note: >
+    This driver reuses scpi_driver_core's exception hierarchy directly
+    rather than defining its own (no LPDS-007 implementation here), so
+    there are no LPDS-<DOMAIN>-<NNN> error codes to report; exception_class
+    is the only reliable identifier.
+  entries:
+    - exception_class: scpi_driver_core.ConfigurationError
+      condition: "invalid transport configuration, e.g. a malformed VISA resource name"
+      retryable: "no"
+      recovery: "fix the configuration and reconnect"
+    - exception_class: scpi_driver_core.NotConnectedError
+      condition: "send()/query() called while not CONNECTED, or after close()"
+      retryable: "no"
+      recovery: "call connect_serial()/connect_usb() first"
+    - exception_class: scpi_driver_core.TransportError
+      condition: "a lower-level I/O failure (serial/VISA backend error)"
+      retryable: "USB/GPIB query() retries automatically; RS232 and send() do not"
+      recovery: "reconnect"
+    - exception_class: scpi_driver_core.TransportTimeoutError
+      condition: "a read did not complete within its timeout"
+      retryable: "USB/GPIB query(): yes, automatically, up to 10 times. RS232 and send(): no."
+      recovery: "none needed on the USB/GPIB query() path; otherwise reconnect"
+
+safety_rules:
+  - "This driver never exposes the CALibration or DIAGnostic SCPI subsystems, and never exposes SYSTem:SECurity (an irreversible full memory wipe). See LOG34970A/Command_coverage.txt for the complete exclusion list."
+  - "send()/query() accept arbitrary SCPI strings with no validation. An agent must not synthesize CALibration:*, DIAGnostic:*, or SYSTem:SECurity commands by hand, even though nothing in this driver would stop it."
+  - "storage()'s channel-range/value helpers (range_check) clamp out-of-range inputs to the nearest bound and print a warning; they do not raise. An agent should treat a clamped value as a signal the input was wrong, not rely on an exception."
+
+verification_objectives:
+  - "connect_serial()/connect_usb() returning True, followed by query('*IDN?') returning a non-empty string, confirms a live link to the instrument."
+  - "send() followed by the matching *:STATe?/*? query returning the value just set confirms a configuration command took effect."
+
+setup_teardown_contract:
+  setup: "call connect_serial() or connect_usb() exactly once before any send()/query()"
+  teardown: "call close() exactly once; do not call close() twice, and do not call send()/query() after close()"
+
+limitations:
+  - "No capability model (LPDS-013), plugin manifest (LPDS-015), or adapter layer exists for this driver yet; it is plain Python only."
+  - "No automated hardware-in-the-loop tests; tests/ covers the transport wiring (via scpi_driver_core's MockTransport) and the command-tree builder's generated strings, not actual instrument behavior."
+  - "connect_usb()'s VISA resource discovery is hardcoded to one Keysight IO Libraries USB-GPIB bridge ID string (_DEFAULT_USB_RESOURCE_SUBSTRING); pass resource_substring to target a different adapter."
+  - "query()'s decoded reply is byte-for-byte identical to what the instrument sent except for one stripped line terminator (RS232 only) - no numeric parsing, no unit stripping. Callers (e.g. Functions/Voltage_measurements.py) do their own float()/split(',')."
+
+planning_hints:
+  - "Always build commands through storage(), not hand-written strings, to get the channel/range validation in range_check and the correct short-form mnemonics the instrument expects."
+  - "On the USB/GPIB path, back-to-back query() calls are already rate-limited by the driver's own 1s settle delay; an agent does not need to add its own sleep between them."
+  - "A scan is: configure the scan list (cmd.route.scan.conf...) and the measurement function, then either READ? once (synchronous) or INITiate followed later by FETCh? (asynchronous); see Examples/Logger_class_v2_full_coverage_demo.py for a worked example."
+
+unknown_handling: >
+  This driver has no explicit UNKNOWN value. A query the instrument cannot
+  answer returns whatever error string the instrument's own SCPI
+  error-reporting convention produces (see SYSTem:ERRor? in
+  LOG34970A/Command_coverage.txt); it is not distinguished from a normal
+  reply at the Python level. An agent must not treat a successful query()
+  return as proof the instrument understood the command - check
+  SYSTem:ERRor? afterward if that matters.
+
+conformance: >
+  Informational only; not validated against LPDS-017 section 12's
+  conformance rules, because the prerequisite LPDS-002/LPDS-003/LPDS-007/
+  LPDS-013/LPDS-015 artifacts this driver would need to validate against
+  do not exist in this repository.

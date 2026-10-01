@@ -1,0 +1,144 @@
+LOG34970A command coverage
+===========================
+
+Source: Agilent 34970A/72A Command Reference (Docs/Agilent 34970A 72A
+Command Reference.pdf), "Command Quick Reference" appendix, cross-checked
+command by command against LOG34970A/LOG34970A_v2.py's storage() tree.
+
+Legend:
+  OK          command tree generates this command correctly
+  EXCLUDED    deliberately not implemented (see reason) - matches the
+              rf_keysight349xx Robot Framework driver's own exclusion policy
+  N/A         applies to the 34972A/LAN-equipped/internal-DMM variants only,
+              or to front-panel USB mass storage; out of scope for this
+              RS232/USB-GPIB driver of the 34970A
+
+See docs/scpi-driver-core.md "SCPI command coverage" for the bugs found and
+fixed while compiling this table (configure.*.conf never worked, a few
+commands that generated nonexistent SCPI, missing required parameters, and
+a dead SENSe:TOTalize tree).
+
+CALCulate subsystem                                            cmd.calculate
+  CALCulate:AVERage:AVERage? / :CLEar / :COUNt? / :MAXimum? /
+    :MAXimum:TIME? / :MINimum? / :MINimum:TIME? / :PTPeak?      OK   .average
+  CALCulate:COMPare:DATA / :MASK / :STATe / :TYPE (+ ?)         OK   .compare
+  CALCulate:LIMit:LOWer / :UPPer (+ :STATe, + ?)                OK   .limit
+  CALCulate:SCALe:GAIN / :OFFSet / :OFFSet:NULL / :STATe /
+    :UNIT (+ ?)                                                 OK   .scale
+  (requires the instrument's internal DMM; see the Command
+  Reference's CALCulate Subsystem Introduction)
+
+CALibration subsystem                                           EXCLUDED
+  CALibration? / :COUNt? / :SECure:CODE / :SECure:STATe /
+  :STRing / :VALue
+    reason: exposes a calibration security code and writes
+    calibration constants to the instrument - service-only
+
+CONFigure subsystem                                             cmd.configure
+  CONFigure? / :CURRent:AC|DC / :DIGital:BYTE / :FREQuency /
+    :FRESistance / :PERiod / :RESistance / :TEMPerature /
+    :TOTalize / :VOLTage:AC|DC                                  OK
+
+DATA subsystem                                                  cmd.data
+  DATA:LAST? / :POINts? / :POINts:EVENt:THReshold (+ ?) /
+    :REMove?                                                    OK
+
+DIAGnostic subsystem                                             EXCLUDED
+  DIAGnostic:DMM:CYCLes? (+ :CLEar) / :PEEK:SLOT:DATA? /
+  :POKE:SLOT:DATA / :RELay:CYCLes? (+ :CLEar)
+    reason: engineering/service-only slot-memory peek/poke
+
+DISPlay subsystem                                               cmd.display
+  DISPlay / ? / :TEXT (+ ? , :CLEar)                             OK
+
+FORMat subsystem                                                cmd.fformat
+  FORMat:READing:ALARm / :CHANnel / :TIME (+ :TYPE) / :UNIT
+    (all + ?)                                                   OK
+
+IEEE-488 common commands                                        cmd.* (top level + cmd.status)
+  *CLS / *ESE (+ ?) / *ESR? / *IDN? / *OPC (+ ?) / *PSC (+ ?) /
+    *RCL / *RST / *SAV / *SRE (+ ?) / *STB? / *TRG / *TST? /
+    *WAI                                                        OK
+
+INSTrument subsystem                                             N/A
+  INSTrument:DMM (+ ? , :INSTalled?)
+    reason: controls the 34972A's internal DMM module; this
+    driver targets the 34970A, which has no such module
+
+LXI subsystem                                                    N/A
+  LXI:IDENtify[:STATe] (+ ?) / :RESet / :RESTart
+    reason: LAN/LXI-specific, not reachable over RS232/GPIB
+
+MEASure subsystem                                               cmd.measure
+  MEASure:CURRent:AC|DC? / :DIGital:BYTE? / :FREQuency? /
+    :FRESistance? / :PERiod? / :RESistance? / :TEMPerature? /
+    :TOTalize? / :VOLTage:AC|DC?                                OK
+
+MEMory subsystem                                                cmd.memory
+  MEMory:NSTates? / :STATe:DELete / :STATe:NAME (+ ?) /
+    :STATe:RECall:AUTO (+ ?) / :STATe:VALid?                    OK
+
+MMEMory subsystem                                                N/A
+  MMEMory:EXPort? / :FORMat:READing:CSEParator (+ ?) /
+  :FORMat:READing:RLIMit (+ ?) / :IMPort:CATalog? /
+  :IMPort:CONFig? / :LOG[:ENABle] (+ ?)
+    reason: front-panel USB mass-storage export/import; not
+    reachable over RS232/GPIB
+
+OUTPut subsystem                                                cmd.output
+  OUTPut:ALARm:CLEar:ALL / :MODE (+ ?) / :SLOPe (+ ?) /
+    :ALARm{1|2|3|4}:CLEar / :SOURce (+ ?)                        OK
+
+ROUTe subsystem                                                 cmd.route
+  ROUTe:CHANnel:ADVance:SOURce (+ ?) / :DELay (+ :AUTO, + ?) /
+    :FWIRe (+ ?) / :CLOSe (+ :EXCLusive, + ?) / :DONE? /
+    :MONitor (+ :DATA?, :STATe, + ?) / :OPEN (+ ?) /
+    :SCAN (+ :SIZE?, + ?)                                       OK
+
+SENSe subsystem                                                 cmd.sense
+  AC/DC Current, AC/DC Voltage, 2-wire/4-wire Resistance:
+    :BANDwidth (current/voltage AC only) / :RANGe (+ :AUTO) /
+    :RESolution (not on AC voltage) / :APERture / :NPLC /
+    :OCOMpensated (resistance only)                             OK
+  Frequency: :APERture / :RANGe:LOWer / :VOLTage:RANGe
+    (+ :AUTO)                                                   OK
+  Period: :APERture / :VOLTage:RANGe (+ :AUTO)                  OK
+  Temperature: :APERture / :NPLC / :RJUNction? /
+    :TRANsducer:{FRTD|RTD|TCouple|THERmistor}:* / :TYPE         OK
+  Digital I/O: :DIGital:DATA:{BYTE|WORD}?                       OK
+  Totalizer: :TOTalize:CLEar:IMMediate / :DATA? / :SLOPe
+    (+ ?) / :STARt[:IMMediate] / :STOP[:IMMediate] / :TYPE
+    (+ ?)                                                       OK
+  Miscellaneous: :FUNCtion (+ ?) / :ZERO:AUTO (+ ?)              OK
+
+SOURce subsystem                                                cmd.source
+  SOURce:DIGital:DATA[:{BYTE|WORD}] (+ ?) / :DIGital:STATe? /
+    :VOLTage (+ ?)                                              OK
+
+STATus subsystem                                                cmd.status
+  STATus:ALARm:CONDition? / :ENABle (+ ?) / [:EVENt]? /
+    :OPERation:CONDition? / :ENABle (+ ?) / [:EVENt]? /
+    :PRESet / :QUEStionable:CONDition? / :ENABle (+ ?) /
+    [:EVENt]?                                                   OK
+
+SYSTem subsystem                                                cmd.system
+  SYSTem:ALARm? / :CPON / :CTYPe? / :DATE (+ ?) / :ERRor? /
+    :INTerface (+ ?) / :LANGuage (+ ?) / :LFRequency? /
+    :LOCal / :LOCK:NAME? / :LOCK:OWNer? / :LOCK:RELease /
+    :LOCK:REQuest? / :PRESet / :REMote / :RWLock /
+    :TIME (+ :SCAN?, + ?) / :VERSion?                           OK
+  SYSTem:SECurity[:IMMediate]                                   EXCLUDED
+    reason: irreversibly erases all instrument memory except
+    calibration data and reboots the instrument
+  SYSTem:COMMunicate:LAN:* (CONTrol?, DHCP, DNS, DOMain?,
+    GATEway, HOSTname, IPADdress, MAC?, SMASk, TELNet:*,
+    UPDate)                                                      N/A
+    reason: applies to LAN-equipped models only; this driver
+    is RS232/USB-GPIB
+
+TRIGger subsystem                                               cmd.trigger
+  TRIGger:COUNt (+ ?) / :SOURce (+ ?) / :TIMer (+ ?)             OK
+
+"Other" (ungrouped) commands                                    cmd.*
+  ABORt / FETCh? / INITiate / INPut:IMPedance:AUTO (+ ?) /
+    R? / READ? / UNIT:TEMPerature (+ ?)                          OK

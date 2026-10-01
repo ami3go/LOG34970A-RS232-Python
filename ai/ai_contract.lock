@@ -1,0 +1,7 @@
+contract_sha256: cc51f03c7f44dcecb0cc285d43df031b1a8f4c0a9a4538d5e95aa67dbdf57b67
+generated_at: "2026-10-01T05:15:05Z"
+generator: "manual (sha256sum ai/ai_contract.yaml), Claude Sonnet 5"
+note: >
+  This lock file checks ai_contract.yaml's integrity only. It does not
+  itself assert LPDS-017 conformance - see the "conformance" field inside
+  ai_contract.yaml.
