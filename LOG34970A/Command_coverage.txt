@@ -18,6 +18,24 @@ fixed while compiling this table (configure.*.conf never worked, a few
 commands that generated nonexistent SCPI, missing required parameters, and
 a dead SENSe:TOTalize tree).
 
+Summary
+-------
+Counted at the granularity of the vendor's own "Command Quick Reference"
+appendix: each command/query line (e.g. "FOO" and "FOO?" count as two),
+PDF line-wraps merged back into one entry each.
+
+  360 commands documented in the Command Reference
+  308 OK        (85.6% of 360)
+   16 EXCLUDED  ( 4.4% of 360): CALibration (9), DIAGnostic (6),
+                SYSTem:SECurity[:IMMediate] (1)
+   36 N/A       (10.0% of 360): SYSTem:COMMunicate:LAN:* (20),
+                MMEMory (9), INSTrument (3), LXI (4)
+
+  308 / 324 = 95.1% of commands actually applicable to an RS232/USB-GPIB
+  34970A (i.e. excluding the 36 N/A ones) are implemented. The remaining
+  4.9% (16 commands) are deliberately excluded for safety, matching
+  rf_keysight349xx's own exclusion policy - not an implementation gap.
+
 CALCulate subsystem                                            cmd.calculate
   CALCulate:AVERage:AVERage? / :CLEar / :COUNt? / :MAXimum? /
     :MAXimum:TIME? / :MINimum? / :MINimum:TIME? / :PTPeak?      OK   .average
